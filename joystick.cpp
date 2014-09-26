@@ -318,7 +318,7 @@ static size_t joystick_button_count(const msl::js_fd_t& fd)
 #include <linux/joystick.h>
 #include <unistd.h>
 
-#define INVALID_HANDLE_VALUE -1
+#define INVALID_HANDLE_VALUE (-1)
 
 std::vector<msl::js_info_t> msl::joystick::list()
 {

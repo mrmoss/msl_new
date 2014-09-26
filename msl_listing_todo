@@ -4,7 +4,7 @@ msl
 			tcp/udp
 				available/close/connect/create/peek/read/write
 		serial
-			available/close/connect/create/peek/read/write
+			available/close/open/peek/read/write
 			list
 	-graphics
 		2d/3d
