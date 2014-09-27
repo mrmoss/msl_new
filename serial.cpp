@@ -36,8 +36,10 @@ static ssize_t select(msl::serial_device_t device)
 
 msl::serial_device_t msl::serial_open(const std::string& name,const size_t baud)
 {
-	msl::serial_device_t device{INVALID_HANDLE_VALUE,"\\\\.\\"+name,baud};
-	device.fd=CreateFile(device.name.c_str(),GENERIC_READ|GENERIC_WRITE,0,0,OPEN_EXISTING,0,nullptr);
+	msl::serial_device_t device{INVALID_HANDLE_VALUE,name,baud};
+	std::string full_path="\\\\.\\"+device.name;
+	device.fd=CreateFile(full_path.c_str(),GENERIC_READ|GENERIC_WRITE,
+		0,0,OPEN_EXISTING,0,nullptr);
 	DCB options;
 
 	if(device.fd!=INVALID_HANDLE_VALUE&&valid_baud(baud)&&GetCommState(device.fd,&options))
@@ -71,7 +73,8 @@ bool msl::serial_valid(const msl::serial_device_t& device)
 	if(device.fd==INVALID_HANDLE_VALUE||!valid_baud(device.baud))
 		return false;
 
-	msl::serial_fd_t fd=CreateFile(device.name.c_str(),GENERIC_READ,0,0,OPEN_EXISTING,0,nullptr);
+	std::string full_path="\\\\.\\"+device.name;
+	msl::serial_fd_t fd=CreateFile(full_path.c_str(),GENERIC_READ,0,0,OPEN_EXISTING,0,nullptr);
 	return fd!=INVALID_HANDLE_VALUE||GetLastError()!=ERROR_FILE_NOT_FOUND;
 }
 
