@@ -26,6 +26,7 @@ int main()
 			}
 
 			test.close();
+			msl::delay_ms(0);
 		}
 
 		std::cout<<":("<<std::endl;
