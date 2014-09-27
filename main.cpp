@@ -5,6 +5,7 @@
 int main()
 {
 	msl::serial test("/dev/ttyACM0",57600);
+	test.open();
 
 	if(test.good())
 	{
