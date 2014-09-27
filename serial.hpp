@@ -12,7 +12,6 @@
 
 namespace msl
 {
-
 	#if(defined(_WIN32)&&!defined(__CYGWIN__))
 	typedef HANDLE serial_fd_t;
 	#else
