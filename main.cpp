@@ -4,29 +4,32 @@
 
 int main()
 {
-	msl::serial test("/dev/ttyACM0",57600);
-	test.open();
-
-	if(test.good())
+	while(true)
 	{
-		std::cout<<":)"<<std::endl;
+		msl::serial test("/dev/ttyACM0",57600);
+		test.open();
 
-		msl::delay_ms(2000);
-		test.write("a",1);
-		std::cout<<"reading"<<std::endl;
-
-		while(test.good())
+		if(test.good())
 		{
-			char temp;
+			std::cout<<":)"<<std::endl;
 
-			while(test.available()>0&&test.read(&temp,1)==1)
-				std::cout<<temp<<std::flush;
+			msl::delay_ms(2000);
+			test.write("a",1);
+			std::cout<<"reading"<<std::endl;
+
+			while(test.good())
+			{
+				char temp;
+
+				while(test.available()>0&&test.read(&temp,1)==1)
+					std::cout<<temp<<std::flush;
+			}
+
+			test.close();
 		}
 
-		test.close();
+		std::cout<<":("<<std::endl;
 	}
-
-	std::cout<<":("<<std::endl;
 
 	return 0;
 }
