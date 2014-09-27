@@ -8,14 +8,14 @@ static bool valid_baud(const size_t baud)
 
 #if(defined(_WIN32)&&!defined(__CYGWIN__))
 
-static ssize_t read(serial_fd_t fd,void* buf,size_t count)
+static ssize_t read(msl::serial_fd_t fd,void* buf,size_t count)
 {
 	DWORD bytes_read=-1;
 	if(ReadFile(fd,buf,count,&bytes_read,0))
 		return bytes_read;
 	return -1;
 }
-static ssize_t write(serial_fd_t fd,void* buf,size_t count)
+static ssize_t write(msl::serial_fd_t fd,void* buf,size_t count)
 {
 	DWORD bytes_sent=-1;
 	if(WriteFile(fd,buf,count,&bytes_sent,0))
@@ -23,20 +23,20 @@ static ssize_t write(serial_fd_t fd,void* buf,size_t count)
 	return -1;
 }
 
-int select(serial_device_t device)
+static int select(msl::serial_device_t device)
 {
 	COMSTAT port_stats;
 	DWORD error_flags=0;
 
-	if(serial_valid(device)&&ClearCommError(device.fd,&error_flags,&port_stats))
+	if(msl::serial_valid(device)&&ClearCommError(device.fd,&error_flags,&port_stats))
 		return port_stats.cbInQue;
 
 	return -1;
 }
 
-serial_device_t serial_open(const std::string& name,const size_t baud)
+msl::serial_device_t msl::serial_open(const std::string& name,const size_t baud)
 {
-	serial_device_t device{INVALID_HANDLE_VALUE,"\\\\.\\"+name,baud};
+	msl::serial_device_t device{INVALID_HANDLE_VALUE,"\\\\.\\"+name,baud};
 	device.fd=CreateFile(device.name.c_str(),GENERIC_READ|GENERIC_WRITE,0,0,OPEN_EXISTING,0,nullptr);
 	DCB options;
 
@@ -56,22 +56,22 @@ serial_device_t serial_open(const std::string& name,const size_t baud)
 			return device;
 	}
 
-	serial_close(device);
+	msl::serial_close(device);
 	device.fd=INVALID_HANDLE_VALUE;
 	return device;
 }
 
-void serial_close(const serial_device_t& device)
+void msl::serial_close(const msl::serial_device_t& device)
 {
 	CloseHandle(device.fd);
 }
 
-bool serial_valid(const serial_device_t& device)
+bool msl::serial_valid(const msl::serial_device_t& device)
 {
 	if(device.fd==INVALID_HANDLE_VALUE||!valid_baud(device.baud))
 		return false;
 
-	serial_fd_t fd=CreateFile(device.name.c_str(),GENERIC_READ,0,0,OPEN_EXISTING,0,nullptr);
+	msl::serial_fd_t fd=CreateFile(device.name.c_str(),GENERIC_READ,0,0,OPEN_EXISTING,0,nullptr);
 	return fd!=INVALID_HANDLE_VALUE||GetLastError()!=ERROR_FILE_NOT_FOUND;
 }
 
@@ -82,7 +82,7 @@ bool serial_valid(const serial_device_t& device)
 #include <termios.h>
 #include <sys/ioctl.h>
 
-int select(serial_device_t device)
+static int select(msl::serial_device_t device)
 {
 	timeval temp={0,0};
 	fd_set rfds;
@@ -115,9 +115,9 @@ static speed_t baud_rate(const size_t baud)
 	return B0;
 }
 
-serial_device_t serial_open(const std::string& name,const size_t baud)
+msl::serial_device_t msl::serial_open(const std::string& name,const size_t baud)
 {
-	serial_device_t device{-1,name,baud};
+	msl::serial_device_t device{-1,name,baud};
 
 	device.fd=open(device.name.c_str(),O_RDWR|O_NOCTTY|O_SYNC);
 	termios options;
@@ -140,17 +140,17 @@ serial_device_t serial_open(const std::string& name,const size_t baud)
 			return device;
 	}
 
-	serial_close(device);
+	msl::serial_close(device);
 	device.fd=-1;
 	return device;
 }
 
-void serial_close(const serial_device_t& device)
+void msl::serial_close(const msl::serial_device_t& device)
 {
 	close(device.fd);
 }
 
-bool serial_valid(const serial_device_t& device)
+bool msl::serial_valid(const msl::serial_device_t& device)
 {
 	if(device.fd==-1||!valid_baud(device.baud))
 		return false;
@@ -161,25 +161,25 @@ bool serial_valid(const serial_device_t& device)
 
 #endif
 
-int serial_available(const serial_device_t& device)
+int msl::serial_available(const msl::serial_device_t& device)
 {
-	if(!serial_valid(device))
+	if(!msl::serial_valid(device))
 		return -1;
 
 	return select(device);
 }
 
-int serial_read(const serial_device_t& device,void* buffer,const size_t size)
+int msl::serial_read(const msl::serial_device_t& device,void* buffer,const size_t size)
 {
-	if(!serial_valid(device))
+	if(!msl::serial_valid(device))
 		return -1;
 
 	return read(device.fd,(char*)buffer,size);
 }
 
-int serial_write(const serial_device_t& device,const void* buffer,const size_t size)
+int msl::serial_write(const msl::serial_device_t& device,const void* buffer,const size_t size)
 {
-	if(!serial_valid(device))
+	if(!msl::serial_valid(device))
 		return -1;
 
 	return write(device.fd,(char*)buffer,size);
