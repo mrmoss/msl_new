@@ -32,6 +32,7 @@ int main()
 		}
 
 		std::cout<<":("<<std::endl;
+		msl::delay_ms(1);
 	}
 
 	return 0;
