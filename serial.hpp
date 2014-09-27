@@ -9,15 +9,27 @@
 #include <stdio.h>
 #include <windows.h>
 #include <commctrl.h>
+
 typedef HANDLE serial_fd_t;
+
 #else
+
 typedef int serial_fd_t;
+
 #endif
 
-serial_fd_t serial_open(const std::string& name,const unsigned int baud);
-void serial_close(const serial_fd_t fd);
-int serial_available(const serial_fd_t fd);
-int serial_read(const serial_fd_t fd,void* buffer,const size_t size);
-int serial_write(const serial_fd_t fd,const void* buffer,const size_t size);
+struct serial_device_t
+{
+	serial_fd_t fd;
+	std::string name;
+	size_t baud;
+};
+
+serial_device_t serial_open(const std::string& name,const size_t baud);
+void serial_close(const serial_device_t& device);
+bool serial_valid(const serial_device_t& device);
+int serial_available(const serial_device_t& device);
+int serial_read(const serial_device_t& device,void* buffer,const size_t size);
+int serial_write(const serial_device_t& device,const void* buffer,const size_t size);
 
 #endif

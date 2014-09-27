@@ -4,21 +4,28 @@
 
 int main()
 {
-	serial_fd_t fd=serial_open("/dev/ttyUSB0",57600);
-	msl::delay_ms(2000);
+	serial_device_t device=serial_open("com4",57600);
 
-	serial_write(fd,"a",1);
-
-	std::cout<<"reading"<<std::endl;
-	while(serial_available(fd)>=0)
+	if(serial_valid(device))
 	{
-		char temp;
+		std::cout<<":)"<<std::endl;
 
-		while(serial_available(fd)>0&&serial_read(fd,&temp,1)==1)
-			std::cout<<temp<<std::flush;
+		msl::delay_ms(2000);
+		serial_write(device,"a",1);
+		std::cout<<"reading"<<std::endl;
+
+		while(serial_available(device)>=0)
+		{
+			char temp;
+
+			while(serial_available(device)>0&&serial_read(device,&temp,1)==1)
+				std::cout<<temp<<std::flush;
+		}
+
+		serial_close(device);
 	}
 
-	serial_close(fd);
+	std::cout<<":("<<std::endl;
 
 	return 0;
 }

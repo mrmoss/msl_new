@@ -1,6 +1,6 @@
 #include "serial.hpp"
 
-static bool valid_baud(const uint32_t baud)
+static bool valid_baud(const size_t baud)
 {
 	return (baud==300||baud==1200||baud==2400||baud==4800||baud==9600||
 		baud==19200||baud==38400||baud==57600||baud==115200);
@@ -8,14 +8,14 @@ static bool valid_baud(const uint32_t baud)
 
 #if(defined(_WIN32)&&!defined(__CYGWIN__))
 
-static SSIZE_T read(serial_fd_t fd,void* buf,size_t count)
+static ssize_t read(serial_fd_t fd,void* buf,size_t count)
 {
 	DWORD bytes_read=-1;
 	if(ReadFile(fd,buf,count,&bytes_read,0))
 		return bytes_read;
 	return -1;
 }
-static SSIZE_T write(serial_fd_t fd,void* buf,size_t count)
+static ssize_t write(serial_fd_t fd,void* buf,size_t count)
 {
 	DWORD bytes_sent=-1;
 	if(WriteFile(fd,buf,count,&bytes_sent,0))
@@ -23,22 +23,24 @@ static SSIZE_T write(serial_fd_t fd,void* buf,size_t count)
 	return -1;
 }
 
-int select(serial_fd_t nfds)
+int select(serial_device_t device)
 {
 	COMSTAT port_stats;
 	DWORD error_flags=0;
-	if(ClearCommError(nfds,&error_flags,&port_stats))
+
+	if(serial_valid(device)&&ClearCommError(device.fd,&error_flags,&port_stats))
 		return port_stats.cbInQue;
+
 	return -1;
 }
 
-serial_fd_t serial_open(const std::string& name,const uint32_t baud)
+serial_device_t serial_open(const std::string& name,const size_t baud)
 {
-	std::string full_path="\\\\.\\"+name;
-	HANDLE fd=CreateFile(full_path.c_str(),GENERIC_READ|GENERIC_WRITE,0,0,CREATE_ALWAYS,0,nullptr);
+	serial_device_t device{INVALID_HANDLE_VALUE,"\\\\.\\"+name,baud};
+	device.fd=CreateFile(device.name.c_str(),GENERIC_READ|GENERIC_WRITE,0,0,OPEN_EXISTING,0,nullptr);
 	DCB options;
 
-	if(fd!=INVALID_HANDLE_VALUE&&valid_baud(baud)&&GetCommState(fd,&options))
+	if(device.fd!=INVALID_HANDLE_VALUE&&valid_baud(baud)&&GetCommState(device.fd,&options))
 	{
 		options.BaudRate=baud;
 		options.fParity=FALSE;
@@ -49,18 +51,28 @@ serial_fd_t serial_open(const std::string& name,const uint32_t baud)
 		options.fOutxDsrFlow=FALSE;
 		options.fDtrControl=DTR_CONTROL_DISABLE;
 		options.fRtsControl=RTS_CONTROL_DISABLE;
+
+		if(SetCommState(device.fd,&options)&&EscapeCommFunction(device.fd,CLRDTR|CLRRTS))
+			return device;
 	}
 
-	if(SetCommState(fd,&options)&&EscapeCommFunction(fd,CLRDTR|CLRRTS))
-		return fd;
-
-	serial_close(fd);
-	return INVALID_HANDLE_VALUE;
+	serial_close(device);
+	device.fd=INVALID_HANDLE_VALUE;
+	return device;
 }
 
-void serial_close(const serial_fd_t fd)
+void serial_close(const serial_device_t& device)
 {
-	CloseHandle(fd);
+	CloseHandle(device.fd);
+}
+
+bool serial_valid(const serial_device_t& device)
+{
+	if(device.fd==INVALID_HANDLE_VALUE||!valid_baud(device.baud))
+		return false;
+
+	serial_fd_t fd=CreateFile(device.name.c_str(),GENERIC_READ,0,0,OPEN_EXISTING,0,nullptr);
+	return fd!=INVALID_HANDLE_VALUE||GetLastError()!=ERROR_FILE_NOT_FOUND;
 }
 
 #else
@@ -70,18 +82,16 @@ void serial_close(const serial_fd_t fd)
 #include <termios.h>
 #include <sys/ioctl.h>
 
-#define INVALID_HANDLE_VALUE (-1)
-
-int select(serial_fd_t nfds)
+int select(serial_device_t device)
 {
 	timeval temp={0,0};
 	fd_set rfds;
 	FD_ZERO(&rfds);
-	FD_SET(nfds,&rfds);
-	return select(nfds+1,&rfds,nullptr,nullptr,&temp);
+	FD_SET(device.fd,&rfds);
+	return select(device.fd+1,&rfds,nullptr,nullptr,&temp);
 }
 
-static speed_t baud_rate(const uint32_t baud)
+static speed_t baud_rate(const size_t baud)
 {
 	if(baud==300)
 		return B300;
@@ -105,12 +115,14 @@ static speed_t baud_rate(const uint32_t baud)
 	return B0;
 }
 
-serial_fd_t serial_open(const std::string& name,const uint32_t baud)
+serial_device_t serial_open(const std::string& name,const size_t baud)
 {
-	serial_fd_t fd=open(name.c_str(),O_RDWR|O_NOCTTY|O_SYNC);
+	serial_device_t device{-1,name,baud};
+
+	device.fd=open(fd.name.c_str(),O_RDWR|O_NOCTTY|O_SYNC)};
 	termios options;
 
-	if(fd!=INVALID_HANDLE_VALUE&&valid_baud(baud)&&tcgetattr(fd,&options)!=-1&&
+	if(device.fd!=-1&&valid_baud(baud)&&tcgetattr(device.fd,&options)!=-1&&
 		cfsetispeed(&options,baud_rate(baud))!=-1&&cfsetospeed(&options,baud_rate(baud))!=-1)
 	{
 		options.c_cflag|=(CS8|CLOCAL|CREAD|HUPCL);
@@ -123,71 +135,51 @@ serial_fd_t serial_open(const std::string& name,const uint32_t baud)
 		options.c_cflag&=~(PARENB|PARODD);
 		options.c_cflag&=~CSTOPB;
 		options.c_cflag&=~CRTSCTS;
+
+		if(tcsetattr(device.fd,TCSANOW,&options)!=-1&&tcflush(device.fd,TCIFLUSH)!=-1&&tcdrain(device.fd)!=-1)
+			return device;
 	}
 
-	if(tcsetattr(fd,TCSANOW,&options)!=-1&&tcflush(fd,TCIFLUSH)!=-1&&tcdrain(fd)!=-1)
-		return fd;
-
-	serial_close(fd);
-	return INVALID_HANDLE_VALUE;
+	serial_close(device.fd);
+	device.fd=-1;
+	return device;
 }
 
-void serial_close(const serial_fd_t fd)
+void serial_close(const serial_device_t& device)
 {
-	close(fd);
+	close(device.fd);
+}
+
+bool serial_valid(const serial_device_t& device)
+{
+	if(!valid_baud(device.baud))
+		return false;
+
+	return device.fd!=-1;
 }
 
 #endif
 
-int serial_available(const serial_fd_t fd)
+int serial_available(const serial_device_t& device)
 {
-	if(fd==INVALID_HANDLE_VALUE)
+	if(!serial_valid(device))
 		return -1;
 
-	int return_value=-1;
-
-	return_value=select(fd);
-
-	//if(return_value>0)
-		//break;
-
-	return return_value;
+	return select(device);
 }
 
-int serial_read(const serial_fd_t fd,void* buffer,const size_t size)
+int serial_read(const serial_device_t& device,void* buffer,const size_t size)
 {
-	if(fd==INVALID_HANDLE_VALUE)
+	if(!serial_valid(device))
 		return -1;
 
-	unsigned int bytes_unread=size;
-	unsigned int bytes_read=read(fd,(char*)buffer+(size-bytes_unread),bytes_unread);
-
-	if(bytes_read>0)
-	{
-		bytes_unread-=bytes_read;
-
-		if(bytes_unread==0)
-			return size;
-	}
-
-	return (size-bytes_unread);
+	return read(device.fd,(char*)buffer,size);
 }
 
-int serial_write(const serial_fd_t fd,const void* buffer,const size_t size)
+int serial_write(const serial_device_t& device,const void* buffer,const size_t size)
 {
-	if(fd==INVALID_HANDLE_VALUE)
+	if(!serial_valid(device))
 		return -1;
 
-	unsigned int bytes_unsent=size;
-	unsigned int bytes_sent=write(fd,(char*)buffer+(size-bytes_unsent),bytes_unsent);
-
-	if(bytes_sent>0)
-	{
-		bytes_unsent-=bytes_sent;
-
-		if(bytes_unsent==0)
-			return size;
-	}
-
-	return (size-bytes_unsent);
+	return write(device.fd,(char*)buffer,size);
 }
