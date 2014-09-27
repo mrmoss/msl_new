@@ -29,10 +29,15 @@ static ssize_t select(msl::serial_device_t device)
 	COMSTAT port_stats;
 	DWORD error_flags=0;
 
-	if(serial_valid(device)&&ClearCommError(device.fd,&error_flags,&port_stats))
+	if(ClearCommError(device.fd,&error_flags,&port_stats))
 		return port_stats.cbInQue;
 
 	return -1;
+}
+
+static void serial_close(const msl::serial_device_t& device)
+{
+	CloseHandle(device.fd);
 }
 
 static msl::serial_device_t serial_open(const std::string& name,const size_t baud)
@@ -62,11 +67,6 @@ static msl::serial_device_t serial_open(const std::string& name,const size_t bau
 	serial_close(device);
 	device.fd=INVALID_HANDLE_VALUE;
 	return device;
-}
-
-static void serial_close(const msl::serial_device_t& device)
-{
-	CloseHandle(device.fd);
 }
 
 static bool serial_valid(const msl::serial_device_t& device)
