@@ -164,11 +164,6 @@ bool msl::serial_valid(const msl::serial_device_t& device)
 
 #endif
 
-msl::serial_device_t msl::serial_open(const msl::serial_device_t& device)
-{
-	return msl::serial_open(device.name,device.baud);
-}
-
 ssize_t msl::serial_available(const msl::serial_device_t& device)
 {
 	if(!msl::serial_valid(device))
@@ -198,7 +193,7 @@ msl::serial::serial(const std::string& name,const size_t baud):device_m{INVALID_
 
 void msl::serial::open()
 {
-	device_m=msl::serial_open(device_m);
+	device_m=msl::serial_open(device_m.name,device_m.baud);
 }
 
 void msl::serial::close()

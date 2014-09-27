@@ -27,7 +27,6 @@ namespace msl
 	};
 
 	serial_device_t serial_open(const std::string& name,const size_t baud);
-	serial_device_t serial_open(const serial_device_t& device);
 	void serial_close(const serial_device_t& device);
 	bool serial_valid(const serial_device_t& device);
 	ssize_t serial_available(const serial_device_t& device);
