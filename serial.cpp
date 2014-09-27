@@ -1,7 +1,5 @@
 #include "serial.hpp"
 
-#include <chrono>
-
 static bool valid_baud(const size_t baud)
 {
 	return (baud==300||baud==1200||baud==2400||baud==4800||baud==9600||
@@ -178,66 +176,20 @@ ssize_t msl::serial_available(const msl::serial_device_t& device)
 	return select(device);
 }
 
-ssize_t msl::serial_read(const msl::serial_device_t& device,void* buffer,const size_t size,
-	const std::int64_t timeout)
+ssize_t msl::serial_read(const msl::serial_device_t& device,void* buffer,const size_t size)
 {
 	if(!msl::serial_valid(device))
 		return -1;
 
-	auto system_time=std::chrono::system_clock::now().time_since_epoch();
-	std::int64_t end=std::chrono::duration_cast<std::chrono::microseconds>(system_time).count()+timeout;
-	std::int64_t now=0;
-	size_t unprocessed=size;
-
-	do
-	{
-		size_t processed=read(device.fd,(char*)buffer+(size-unprocessed),unprocessed);
-
-		if(processed>0)
-		{
-			unprocessed-=processed;
-
-			if(unprocessed==0)
-				return size;
-		}
-
-		auto system_time=std::chrono::system_clock::now().time_since_epoch();
-		now=std::chrono::duration_cast<std::chrono::microseconds>(system_time).count();
-	}
-	while(now<end);
-
-	return size-unprocessed;
+	return read(device.fd,(char*)buffer,size);
 }
 
-ssize_t msl::serial_write(const msl::serial_device_t& device,const void* buffer,const size_t size,
-	const std::int64_t timeout)
+ssize_t msl::serial_write(const msl::serial_device_t& device,const void* buffer,const size_t size)
 {
 	if(!msl::serial_valid(device))
 		return -1;
 
-	auto system_time=std::chrono::system_clock::now().time_since_epoch();
-	std::int64_t end=std::chrono::duration_cast<std::chrono::microseconds>(system_time).count()+timeout;
-	std::int64_t now=0;
-	size_t unprocessed=size;
-
-	do
-	{
-		size_t processed=write(device.fd,(char*)buffer+(size-unprocessed),unprocessed);
-
-		if(processed>0)
-		{
-			unprocessed-=processed;
-
-			if(unprocessed==0)
-				return size;
-		}
-
-		auto system_time=std::chrono::system_clock::now().time_since_epoch();
-		now=std::chrono::duration_cast<std::chrono::microseconds>(system_time).count();
-	}
-	while(now<end);
-
-	return size-unprocessed;
+	return write(device.fd,(char*)buffer,size);
 }
 
 msl::serial::serial(const std::string& name,const size_t baud):device_m{INVALID_HANDLE_VALUE,name,baud}
@@ -263,12 +215,12 @@ ssize_t msl::serial::available() const
 	return msl::serial_available(device_m);
 }
 
-ssize_t msl::serial::read(void* buf,const size_t count,const std::int64_t timeout) const
+ssize_t msl::serial::read(void* buf,const size_t count) const
 {
-	return msl::serial_read(device_m,buf,count,timeout);
+	return msl::serial_read(device_m,buf,count);
 }
 
-ssize_t msl::serial::write(const void* buf,const size_t count,const std::int64_t timeout) const
+ssize_t msl::serial::write(const void* buf,const size_t count) const
 {
-	return msl::serial_write(device_m,buf,count,timeout);
+	return msl::serial_write(device_m,buf,count);
 }
