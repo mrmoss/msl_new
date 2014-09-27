@@ -15,6 +15,7 @@ static ssize_t read(msl::serial_fd_t fd,void* buf,size_t count)
 		return bytes_read;
 	return -1;
 }
+
 static ssize_t write(msl::serial_fd_t fd,void* buf,size_t count)
 {
 	DWORD bytes_sent=-1;
