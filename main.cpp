@@ -24,11 +24,11 @@ int main()
 				while(test.available()>0&&test.read(&temp,1)==1)
 					std::cout<<temp<<std::flush;
 
-				msl::delay_us(1);
+				msl::delay_ms(1);
 			}
 
 			test.close();
-			msl::delay_us(1);
+			msl::delay_ms(1);
 		}
 
 		std::cout<<":("<<std::endl;
