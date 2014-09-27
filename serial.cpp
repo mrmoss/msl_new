@@ -119,7 +119,7 @@ serial_device_t serial_open(const std::string& name,const size_t baud)
 {
 	serial_device_t device{-1,name,baud};
 
-	device.fd=open(fd.name.c_str(),O_RDWR|O_NOCTTY|O_SYNC)};
+	device.fd=open(device.name.c_str(),O_RDWR|O_NOCTTY|O_SYNC);
 	termios options;
 
 	if(device.fd!=-1&&valid_baud(baud)&&tcgetattr(device.fd,&options)!=-1&&
@@ -140,7 +140,7 @@ serial_device_t serial_open(const std::string& name,const size_t baud)
 			return device;
 	}
 
-	serial_close(device.fd);
+	serial_close(device);
 	device.fd=-1;
 	return device;
 }
@@ -152,10 +152,11 @@ void serial_close(const serial_device_t& device)
 
 bool serial_valid(const serial_device_t& device)
 {
-	if(!valid_baud(device.baud))
+	if(device.fd==-1||!valid_baud(device.baud))
 		return false;
 
-	return device.fd!=-1;
+	termios options;
+	return tcgetattr(device.fd,&options)!=-1;
 }
 
 #endif

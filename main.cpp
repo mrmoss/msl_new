@@ -4,7 +4,7 @@
 
 int main()
 {
-	serial_device_t device=serial_open("com4",57600);
+	serial_device_t device=serial_open("/dev/ttyACM0",57600);
 
 	if(serial_valid(device))
 	{
