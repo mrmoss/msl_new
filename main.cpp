@@ -4,7 +4,30 @@
 
 int main()
 {
-	msl::serial_device_t device=msl::serial_open("/dev/ttyACM0",57600);
+	msl::serial test("/dev/ttyACM0",57600);
+
+	if(test.good())
+	{
+		std::cout<<":)"<<std::endl;
+
+		msl::delay_ms(2000);
+		test.write("a",1);
+		std::cout<<"reading"<<std::endl;
+
+		while(test.good())
+		{
+			char temp;
+
+			while(test.available()>0&&test.read(&temp,1)==1)
+				std::cout<<temp<<std::flush;
+		}
+
+		test.close();
+	}
+
+	std::cout<<":("<<std::endl;
+
+	/*msl::serial_device_t device=msl::serial_open("/dev/ttyACM0",57600);
 
 	if(msl::serial_valid(device))
 	{
@@ -25,7 +48,7 @@ int main()
 		msl::serial_close(device);
 	}
 
-	std::cout<<":("<<std::endl;
+	std::cout<<":("<<std::endl;*/
 
 	return 0;
 }
