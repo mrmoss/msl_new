@@ -1,5 +1,5 @@
-#ifndef MSL_2011_STRING_HPP
-#define MSL_2011_STRING_HPP
+#ifndef MSL_C11_STRING_HPP
+#define MSL_C11_STRING_HPP
 
 #include <string>
 

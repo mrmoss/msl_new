@@ -1,5 +1,5 @@
-#ifndef MSL_2011_JOYSTICK_HPP
-#define MSL_2011_JOYSTICK_HPP
+#ifndef MSL_C11_JOYSTICK_HPP
+#define MSL_C11_JOYSTICK_HPP
 
 //Windows Dependencies:
 //		-lhid -lpthread

@@ -1,5 +1,5 @@
-#ifndef MSL_2011_TIME_HPP
-#define MSL_2011_TIME_HPP
+#ifndef MSL_C11_TIME_HPP
+#define MSL_C11_TIME_HPP
 
 #include <cstdint>
 

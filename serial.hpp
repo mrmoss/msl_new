@@ -1,5 +1,5 @@
-#ifndef MSL_2011_SERIAL_HPP
-#define MSL_2011_SERIAL_HPP
+#ifndef MSL_C11_SERIAL_HPP
+#define MSL_C11_SERIAL_HPP
 
 #include <string>
 
