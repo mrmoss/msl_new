@@ -23,6 +23,8 @@ int main()
 
 				while(test.available()>0&&test.read(&temp,1)==1)
 					std::cout<<temp<<std::flush;
+
+				msl::delay_us(1);
 			}
 
 			test.close();
