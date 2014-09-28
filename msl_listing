@@ -2,9 +2,9 @@ msl
 	-communication
 		socket
 			tcp/udp
-				available/close/connect/create/peek/read/write
+				available/close/connect/create/read/write
 		serial
-			available/close/connect/create/peek/read/write
+			available/close/connect/create/read/write
 			list
 	-graphics
 		2d/3d

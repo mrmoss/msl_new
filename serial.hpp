@@ -25,16 +25,11 @@ namespace msl
 		size_t baud;
 	};
 
-	serial_device_t serial_open(const std::string& name,const size_t baud);
-	void serial_close(const serial_device_t& device);
-	bool serial_valid(const serial_device_t& device);
-	ssize_t serial_available(const serial_device_t& device);
-	ssize_t serial_read(const serial_device_t& device,void* buffer,const size_t size);
-	ssize_t serial_write(const serial_device_t& device,const void* buffer,const size_t size);
-
 	class serial
 	{
 		public:
+			//static std::vector<js_info_t> list();
+
 			serial(const std::string& name,const size_t baud);
 			void open();
 			void close();

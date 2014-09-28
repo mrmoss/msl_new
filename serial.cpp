@@ -29,13 +29,13 @@ static ssize_t select(msl::serial_device_t device)
 	COMSTAT port_stats;
 	DWORD error_flags=0;
 
-	if(msl::serial_valid(device)&&ClearCommError(device.fd,&error_flags,&port_stats))
+	if(serial_valid(device)&&ClearCommError(device.fd,&error_flags,&port_stats))
 		return port_stats.cbInQue;
 
 	return -1;
 }
 
-msl::serial_device_t msl::serial_open(const std::string& name,const size_t baud)
+static msl::serial_device_t serial_open(const std::string& name,const size_t baud)
 {
 	msl::serial_device_t device{INVALID_HANDLE_VALUE,name,baud};
 	std::string full_path="\\\\.\\"+device.name;
@@ -59,17 +59,17 @@ msl::serial_device_t msl::serial_open(const std::string& name,const size_t baud)
 			return device;
 	}
 
-	msl::serial_close(device);
+	serial_close(device);
 	device.fd=INVALID_HANDLE_VALUE;
 	return device;
 }
 
-void msl::serial_close(const msl::serial_device_t& device)
+static void serial_close(const msl::serial_device_t& device)
 {
 	CloseHandle(device.fd);
 }
 
-bool msl::serial_valid(const msl::serial_device_t& device)
+static bool serial_valid(const msl::serial_device_t& device)
 {
 	if(device.fd==INVALID_HANDLE_VALUE||!valid_baud(device.baud))
 		return false;
@@ -121,7 +121,12 @@ static speed_t baud_rate(const size_t baud)
 	return B0;
 }
 
-msl::serial_device_t msl::serial_open(const std::string& name,const size_t baud)
+static void serial_close(const msl::serial_device_t& device)
+{
+	close(device.fd);
+}
+
+static msl::serial_device_t serial_open(const std::string& name,const size_t baud)
 {
 	msl::serial_device_t device{INVALID_HANDLE_VALUE,name,baud};
 
@@ -147,17 +152,12 @@ msl::serial_device_t msl::serial_open(const std::string& name,const size_t baud)
 			return device;
 	}
 
-	msl::serial_close(device);
+	serial_close(device);
 	device.fd=INVALID_HANDLE_VALUE;
 	return device;
 }
 
-void msl::serial_close(const msl::serial_device_t& device)
-{
-	close(device.fd);
-}
-
-bool msl::serial_valid(const msl::serial_device_t& device)
+static bool serial_valid(const msl::serial_device_t& device)
 {
 	if(device.fd==INVALID_HANDLE_VALUE||!valid_baud(device.baud))
 		return false;
@@ -168,25 +168,25 @@ bool msl::serial_valid(const msl::serial_device_t& device)
 
 #endif
 
-ssize_t msl::serial_available(const msl::serial_device_t& device)
+ssize_t serial_available(const msl::serial_device_t& device)
 {
-	if(!msl::serial_valid(device))
+	if(!serial_valid(device))
 		return -1;
 
 	return select(device);
 }
 
-ssize_t msl::serial_read(const msl::serial_device_t& device,void* buffer,const size_t size)
+ssize_t serial_read(const msl::serial_device_t& device,void* buffer,const size_t size)
 {
-	if(!msl::serial_valid(device))
+	if(!serial_valid(device))
 		return -1;
 
 	return read(device.fd,(char*)buffer,size);
 }
 
-ssize_t msl::serial_write(const msl::serial_device_t& device,const void* buffer,const size_t size)
+ssize_t serial_write(const msl::serial_device_t& device,const void* buffer,const size_t size)
 {
-	if(!msl::serial_valid(device))
+	if(!serial_valid(device))
 		return -1;
 
 	return write(device.fd,(char*)buffer,size);
@@ -197,30 +197,30 @@ msl::serial::serial(const std::string& name,const size_t baud):device_m{INVALID_
 
 void msl::serial::open()
 {
-	device_m=msl::serial_open(device_m.name,device_m.baud);
+	device_m=serial_open(device_m.name,device_m.baud);
 }
 
 void msl::serial::close()
 {
-	msl::serial_close(device_m);
+	serial_close(device_m);
 }
 
 bool msl::serial::good() const
 {
-	return msl::serial_valid(device_m);
+	return serial_valid(device_m);
 }
 
 ssize_t msl::serial::available() const
 {
-	return msl::serial_available(device_m);
+	return serial_available(device_m);
 }
 
 ssize_t msl::serial::read(void* buf,const size_t count) const
 {
-	return msl::serial_read(device_m,buf,count);
+	return serial_read(device_m,buf,count);
 }
 
 ssize_t msl::serial::write(const void* buf,const size_t count) const
 {
-	return msl::serial_write(device_m,buf,count);
+	return serial_write(device_m,buf,count);
 }
