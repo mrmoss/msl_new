@@ -13,12 +13,16 @@ int main()
 		{
 			std::cout<<":)"<<std::endl;
 
-			msl::delay_ms(2000);
-			test.write("a",1);
-			std::cout<<"reading"<<std::endl;
+			auto timer=msl::millis()+2000;
 
 			while(test.good())
 			{
+				if(msl::millis()>=timer)
+				{
+					test.write("a",1);
+					timer=msl::millis()+500;
+				}
+
 				char temp;
 
 				while(test.available()>0&&test.read(&temp,1)==1)
