@@ -31,6 +31,7 @@ namespace msl
 			//static std::vector<js_info_t> list();
 
 			serial(const std::string& name,const size_t baud);
+			~serial();
 			void open();
 			void close();
 			bool good() const;

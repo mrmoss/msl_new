@@ -417,6 +417,7 @@ msl::joystick::~joystick()
 
 void msl::joystick::open()
 {
+	joystick_close(info_m);
 	fd_m=joystick_open(info_m);
 
 	if(good())
@@ -473,7 +474,5 @@ size_t msl::joystick::button_count() const
 void msl::joystick::update_m()
 {
 	while(good())
-	{
 		joystick_update(fd_m,axes_m,buttons_m);
-	}
 }

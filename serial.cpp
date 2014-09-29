@@ -195,6 +195,11 @@ ssize_t serial_write(const msl::serial_device_t& device,const void* buffer,const
 msl::serial::serial(const std::string& name,const size_t baud):device_m{INVALID_HANDLE_VALUE,name,baud}
 {}
 
+msl::serial::~serial()
+{
+	close();
+}
+
 void msl::serial::open()
 {
 	device_m=serial_open(device_m.name,device_m.baud);
