@@ -417,7 +417,6 @@ msl::joystick::~joystick()
 
 void msl::joystick::open()
 {
-	joystick_close(info_m);
 	fd_m=joystick_open(info_m);
 
 	if(good())
