@@ -6,6 +6,7 @@
 
 #include "joystick.hpp"
 
+#include <chrono>
 #include <stdexcept>
 #include <thread>
 
@@ -421,22 +422,29 @@ void msl::joystick::open()
 
 	if(good())
 	{
+		lock_m.lock();
 		axes_m.resize(joystick_axis_count(fd_m));
 		buttons_m.resize(joystick_button_count(fd_m));
 		std::thread test(std::bind(&msl::joystick::update_m,this));
 		test.detach();
+		lock_m.unlock();
 	}
 }
 
 void msl::joystick::close()
 {
+	lock_m.lock();
 	joystick_close(fd_m);
 	fd_m.handle=INVALID_HANDLE_VALUE;
+	lock_m.unlock();
 }
 
-bool msl::joystick::good() const
+bool msl::joystick::good()
 {
-	return joystick_valid_fd(fd_m);
+	lock_m.lock();
+	auto value=joystick_valid_fd(fd_m);
+	lock_m.unlock();
+	return value;
 }
 
 msl::js_info_t msl::joystick::info() const
@@ -444,34 +452,62 @@ msl::js_info_t msl::joystick::info() const
 	return info_m;
 }
 
-float msl::joystick::axis(const size_t index) const
+float msl::joystick::axis(const size_t index)
 {
 	if(index>=axis_count())
 		throw std::out_of_range("joystick::axis");
 
-	return axes_m[index];
+	lock_m.lock();
+	auto value=axes_m[index];
+	lock_m.unlock();
+	return value;
 }
 
-bool msl::joystick::button(const size_t index) const
+bool msl::joystick::button(const size_t index)
 {
 	if(index>=button_count())
 		throw std::out_of_range("joystick::button");
 
-	return buttons_m[index];
+	lock_m.lock();
+	auto value=buttons_m[index];
+	lock_m.unlock();
+	return value;
 }
 
-size_t msl::joystick::axis_count() const
+size_t msl::joystick::axis_count()
 {
-	return axes_m.size();
+	lock_m.lock();
+	auto count=axes_m.size();
+	lock_m.unlock();
+	return count;
 }
 
-size_t msl::joystick::button_count() const
+size_t msl::joystick::button_count()
 {
-	return buttons_m.size();
+	lock_m.lock();
+	auto count=buttons_m.size();
+	lock_m.unlock();
+	return count;
 }
 
 void msl::joystick::update_m()
 {
 	while(good())
-		joystick_update(fd_m,axes_m,buttons_m);
+	{
+		lock_m.lock();
+		auto fd_copy=fd_m;
+		auto axes_copy=axes_m;
+		auto buttons_copy=buttons_m;
+		lock_m.unlock();
+
+		joystick_update(fd_copy,axes_copy,buttons_copy);
+
+		lock_m.lock();
+		fd_m=fd_copy;
+		axes_m=axes_copy;
+		buttons_m=buttons_copy;
+		lock_m.unlock();
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
 }

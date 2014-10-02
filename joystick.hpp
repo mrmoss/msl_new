@@ -7,6 +7,7 @@
 //Linux Dependencies:
 //		-lpthread
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -64,12 +65,12 @@ namespace msl
 			void open();
 			void close();
 
-			bool good() const;
+			bool good();
 			js_info_t info() const;
-			float axis(const size_t axis) const;
-			bool button(const size_t button) const;
-			size_t axis_count() const;
-			size_t button_count() const;
+			float axis(const size_t axis);
+			bool button(const size_t button);
+			size_t axis_count();
+			size_t button_count();
 
 		private:
 			void update_m();
@@ -77,6 +78,7 @@ namespace msl
 			js_fd_t fd_m;
 			std::vector<float> axes_m;
 			std::vector<bool> buttons_m;
+			std::mutex lock_m;
 	};
 }
 
