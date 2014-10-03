@@ -76,8 +76,10 @@ static bool serial_valid(const msl::serial_device_t& device)
 
 	std::string full_path="\\\\.\\"+device.name;
 	msl::serial_fd_t fd=CreateFile(full_path.c_str(),GENERIC_READ,0,0,OPEN_EXISTING,0,nullptr);
+	bool valid=fd!=INVALID_HANDLE_VALUE||GetLastError()!=ERROR_FILE_NOT_FOUND;
+	CloseHandle(fd);
 
-	return fd!=INVALID_HANDLE_VALUE||GetLastError()!=ERROR_FILE_NOT_FOUND;
+	return valid;
 }
 
 std::vector<std::string> msl::serial::list()
@@ -90,10 +92,9 @@ std::vector<std::string> msl::serial::list()
 		msl::serial_fd_t fd=CreateFile(full_path.c_str(),GENERIC_READ,0,0,OPEN_EXISTING,0,nullptr);
 
 		if(fd!=INVALID_HANDLE_VALUE||GetLastError()!=ERROR_FILE_NOT_FOUND)
-		{
-			port.close();
 			list.push_back("com"+std::to_string(ii));
-		}
+
+		CloseHandle(fd);
 	}
 
 	return list;
