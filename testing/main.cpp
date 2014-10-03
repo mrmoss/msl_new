@@ -1,6 +1,6 @@
 #include <iostream>
-#include "joystick.hpp"
-#include "time.hpp"
+#include "../joystick.hpp"
+#include "../time.hpp"
 
 int main()
 {
