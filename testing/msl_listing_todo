@@ -3,8 +3,6 @@ msl
 		socket
 			tcp/udp
 				available/close/connect/create/peek/read/write
-		serial
-			list
 	-graphics
 		2d/3d
 			shapes
