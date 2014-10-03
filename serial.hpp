@@ -2,6 +2,7 @@
 #define MSL_C11_SERIAL_HPP
 
 #include <string>
+#include <vector>
 
 #if(defined(_WIN32)&&!defined(__CYGWIN__))
 #include <conio.h>
@@ -28,7 +29,7 @@ namespace msl
 	class serial
 	{
 		public:
-			//static std::vector<js_info_t> list();
+			static std::vector<std::string> list();
 
 			serial(const std::string& name,const size_t baud);
 			~serial();

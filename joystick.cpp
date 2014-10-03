@@ -72,7 +72,7 @@ static std::string hid_get_name(const RAWINPUTDEVICELIST device)
 	std::string return_name="";
 	unsigned int size=0;
 
-	if(GetRawInputDeviceInfo(device.hDevice,RIDI_DEVICENAME,NULL,&size)==0)
+	if(GetRawInputDeviceInfo(device.hDevice,RIDI_DEVICENAME,nullptr,&size)==0)
 	{
 		char* name_cstr=new char[size];
 		size=GetRawInputDeviceInfo(device.hDevice,RIDI_DEVICENAME,name_cstr,&size);
@@ -328,11 +328,11 @@ std::vector<msl::js_info_t> msl::joystick::list()
 
 	DIR* dp=opendir("/dev/input");
 
-	while(dp!=NULL)
+	while(dp!=nullptr)
 	{
 		dirent* np=readdir(dp);
 
-		if(np==NULL)
+		if(np==nullptr)
 		{
 			closedir(dp);
 			break;
@@ -345,10 +345,8 @@ std::vector<msl::js_info_t> msl::joystick::list()
 	}
 
 	for(auto ii:files)
-	{
 		if(ii.find("js")==0)
 			list.push_back({"/dev/input/"+ii});
-	}
 
 	return list;
 }
