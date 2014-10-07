@@ -3,13 +3,13 @@
 #include <chrono>
 #include <thread>
 
-std::int64_t msl::nanis()
+std::int64_t msl::nanos()
 {
 	auto system_time=std::chrono::system_clock::now().time_since_epoch();
 	return std::chrono::duration_cast<std::chrono::nanoseconds>(system_time).count();
 }
 
-std::int64_t msl::micris()
+std::int64_t msl::micros()
 {
 	auto system_time=std::chrono::system_clock::now().time_since_epoch();
 	return std::chrono::duration_cast<std::chrono::microseconds>(system_time).count();

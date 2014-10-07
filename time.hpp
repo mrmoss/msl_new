@@ -5,8 +5,8 @@
 
 namespace msl
 {
-	std::int64_t nanis();
-	std::int64_t micris();
+	std::int64_t nanos();
+	std::int64_t micros();
 	std::int64_t millis();
 
 	void delay_ns(const std::int64_t nanoseconds);
