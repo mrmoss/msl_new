@@ -30,10 +30,10 @@ std::string msl::replace_all(std::string str,const std::string& find,const std::
 
 bool msl::ends_with(const std::string& str,const std::string& suffix)
 {
-	return str.rfind(suffix)==(str.size()-suffix.size());
+	return (str.size()>=suffix.size()&&str.compare(str.size()-suffix.size(),suffix.size(),suffix)==0);
 }
 
 bool msl::starts_with(const std::string& str,const std::string& prefix)
 {
-	return str.find(prefix)==0;
+	return (str.size()>=prefix.size()&&str.compare(0,prefix.size(),prefix)==0);
 }
