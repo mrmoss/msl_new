@@ -7,7 +7,7 @@
 
 int main()
 {
-	msl::tcp_socket c("127.0.0.1:8080",false);
+	msl::udp_socket c("127.0.0.1:8080",2048);
 	c.open();
 
 	if(!c.good())
@@ -18,8 +18,6 @@ int main()
 
 	std::cout<<":)"<<std::endl;
 
-	std::string message="";
-
 	auto timer=msl::millis()+1000;
 
 
@@ -27,24 +25,18 @@ int main()
 	{
 		if(msl::millis()>=timer)
 		{
-			c.write("hello server!\n");
+			std::cout<<"sending packet!"<<std::endl;
+			std::string data;
+			for(int ii=0;ii<2048;++ii)
+				data+='a';
+			c.write(data);
 			timer=msl::millis()+1000;
 		}
 
-		char temp;
+		/*char temp[2048];
 
-		while(c.available()>0&&c.read(&temp,1)==1)
-		{
-			if(temp=='\n')
-			{
-				std::cout<<"server said \""<<message<<"\"."<<std::endl;
-				message="";
-			}
-			else
-			{
-				message+=temp;
-			}
-		}
+		while(c.available()>0&&c.read(temp,2048)==2048)
+			std::cout<<"received packet!"<<std::endl;*/
 
 		msl::delay_ms(1);
 	}

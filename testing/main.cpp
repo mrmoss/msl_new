@@ -8,7 +8,7 @@
 
 int main()
 {
-	msl::socket s("127.0.0.1:8080",true);
+	msl::tcp_socket s("127.0.0.1:8080",true);
 	s.open();
 
 	if(!s.good())
@@ -59,6 +59,8 @@ int main()
 				++ii;
 			}
 		}
+
+		msl::delay_ms(1);
 	}
 
 	std::cout<<"server shutdown..."<<std::endl;

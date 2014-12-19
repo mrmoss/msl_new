@@ -26,7 +26,7 @@ namespace msl
 		sockaddr_in ip;
 		bool host;
 		bool tcp;
-		int buffer_size;
+		size_t buffer_size;
 	};
 
 	class socket
@@ -35,17 +35,33 @@ namespace msl
 			socket(const uint8_t* ip,const uint16_t& port,bool host,const bool tcp=true);
 			socket(const socket_device_t& device);
 			socket(const std::string& address,bool host,const bool tcp=true);
-			void open();
-			void close();
-			bool good() const;
-			ssize_t available() const;
-			ssize_t read(void* buf,const size_t count) const;
-			ssize_t write(const void* buf,const size_t count) const;
-			ssize_t write(const std::string& buf) const;
-			socket accept();
+			virtual void open();
+			virtual void close();
+			virtual bool good() const;
+			virtual ssize_t available() const;
+			virtual ssize_t read(void* buf,const size_t count) const;
+			virtual ssize_t write(const void* buf,const size_t count) const;
+			virtual ssize_t write(const std::string& buf) const;
+			virtual socket accept();
 
-		private:
+		protected:
 			socket_device_t device_m;
+	};
+
+	class tcp_socket:public socket
+	{
+		public:
+			tcp_socket(const uint8_t* ip,const uint16_t& port,bool host);
+			tcp_socket(const socket_device_t& device);
+			tcp_socket(const std::string& address,bool host);
+	};
+
+	class udp_socket:public socket
+	{
+		public:
+			udp_socket(const uint8_t* ip,const uint16_t& port,const size_t buffer_size);
+			udp_socket(const socket_device_t& device,const size_t buffer_size);
+			udp_socket(const std::string& address,const size_t buffer_size);
 	};
 }
 
