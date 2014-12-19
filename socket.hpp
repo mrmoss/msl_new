@@ -1,6 +1,7 @@
 #ifndef MSL_C11_SOCKET_HPP
 #define MSL_C11_SOCKET_HPP
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -22,7 +23,7 @@ namespace msl
 	struct socket_device_t
 	{
 		socket_fd_t fd;
-		sockaddr_in address;
+		sockaddr_in ip;
 		bool host;
 		bool tcp;
 		int buffer_size;
@@ -31,8 +32,9 @@ namespace msl
 	class socket
 	{
 		public:
-			socket(const uint8_t* address,const uint16_t& port,bool host,const bool tcp=true);
+			socket(const uint8_t* ip,const uint16_t& port,bool host,const bool tcp=true);
 			socket(const socket_device_t& device);
+			socket(const std::string& address,bool host,const bool tcp=true);
 			void open();
 			void close();
 			bool good() const;

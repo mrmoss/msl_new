@@ -7,10 +7,7 @@
 
 int main()
 {
-	uint8_t test[4]={127,0,0,1};
-	uint16_t port=8080;
-
-	msl::socket c(test,port,false);
+	msl::socket c("127.0.0.1:8080",false);
 	c.open();
 
 	if(!c.good())

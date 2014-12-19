@@ -1,6 +1,7 @@
 #include "socket.hpp"
 
-#include <string.h>
+#include <stdexcept>
+#include <cstring>
 
 #define INVALID_SOCKET_VALUE (~0)
 
@@ -12,6 +13,126 @@
 		return closesocket(fd);
 	}
 #endif
+
+void string_to_rawaddr(std::string str,uint8_t* ip,uint16_t& port)
+{
+	uint8_t temp_ip[4];
+	uint16_t temp_port;
+
+	bool saw_colon=false;
+	int state=0;
+	int dot_count=0;
+	size_t start=0;
+	bool finished=false;
+
+	for(size_t ii=0;ii<str.size();++ii)
+	{
+		if(state==0&&isdigit(str[ii])!=0)
+		{
+			start=ii;
+
+			if(dot_count==3&&saw_colon)
+				state=3;
+			else if(dot_count==3)
+				state=2;
+			else
+				state=1;
+		}
+		else if(state==1)
+		{
+
+			if(isdigit(str[ii])==0)
+			{
+				if(str[ii]=='.')
+				{
+					++dot_count;
+
+					if(dot_count>3)
+					{
+						state=-1;
+					}
+					else
+					{
+						auto check=std::stoi(str.substr(start,ii+1-start));
+
+						if(check>=0&&check<=255)
+						{
+							temp_ip[dot_count-1]=check;
+							state=0;
+						}
+						else
+						{
+							state=-1;
+						}
+					}
+				}
+				else
+				{
+					state=-1;
+				}
+			}
+		}
+		else if(state==2)
+		{
+			if(isdigit(str[ii])==0)
+			{
+				if(str[ii]==':')
+				{
+					if(saw_colon)
+					{
+						state=-1;
+					}
+					else
+					{
+						auto check=std::stoi(str.substr(start,ii+1-start));
+
+						if(check>=0&&check<=255)
+						{
+							temp_ip[dot_count]=check;
+							saw_colon=true;
+							state=0;
+						}
+						else
+						{
+							state=-1;
+						}
+					}
+				}
+				else
+				{
+					state=-1;
+				}
+			}
+		}
+		else if(state==3)
+		{
+			if(isdigit(str[ii])==0)
+			{
+				state=-1;
+			}
+			else if(ii==str.size()-1)
+			{
+				auto check=std::stoi(str.substr(start,ii+1-start));
+
+				if(check>=0&&check<=65535)
+				{
+					finished=true;
+					temp_port=check;
+				}
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if(!finished)
+		throw std::runtime_error("void string_to_rawaddr(std::string str,uint8_t* ip,uint16_t& port) - Invalid ip string!");
+
+	memcpy(ip,temp_ip,4);
+	port=temp_port;
+}
 
 static bool socket_inited=false;
 
@@ -52,7 +173,7 @@ static void socket_open(msl::socket_device_t& device)
 		lingerer.l_onoff=1;
 		lingerer.l_linger=10;
 		int on=1;
-		socklen_t address_length=sizeof(device.address);
+		socklen_t ip_length=sizeof(device.ip);
 
 		if(device.fd!=INVALID_SOCKET_VALUE)
 		{
@@ -62,13 +183,13 @@ static void socket_open(msl::socket_device_t& device)
 			if(setsockopt(device.fd,SOL_SOCKET,SO_REUSEADDR,(const char*)&on,sizeof(on))!=0)
 				socket_close(device);
 
-			if(!device.tcp&&setsockopt(device.fd,SOL_SOCKET,SO_RCVBUF,(const char*)&device.buffer_size,address_length)!=0)
+			if(!device.tcp&&setsockopt(device.fd,SOL_SOCKET,SO_RCVBUF,(const char*)&device.buffer_size,ip_length)!=0)
 				socket_close(device);
 
-			if(!device.tcp&&setsockopt(device.fd,SOL_SOCKET,SO_SNDBUF,(const char*)&device.buffer_size,address_length)!=0)
+			if(!device.tcp&&setsockopt(device.fd,SOL_SOCKET,SO_SNDBUF,(const char*)&device.buffer_size,ip_length)!=0)
 				socket_close(device);
 
-			if(bind(device.fd,(sockaddr*)&device.address,sizeof(device.address))!=0)
+			if(bind(device.fd,(sockaddr*)&device.ip,sizeof(device.ip))!=0)
 				socket_close(device);
 
 			if(device.tcp&&listen(device.fd,16))
@@ -77,7 +198,7 @@ static void socket_open(msl::socket_device_t& device)
 	}
 	else
 	{
-		if(connect(device.fd,(sockaddr*)&device.address,sizeof(device.address))!=0)
+		if(connect(device.fd,(sockaddr*)&device.ip,sizeof(device.ip))!=0)
 			device.fd=INVALID_SOCKET_VALUE;
 	}
 }
@@ -131,24 +252,36 @@ static msl::socket_device_t socket_accept(const msl::socket_device_t& device)
 
 	if(socket_available(device)>0)
 	{
-		socklen_t address_length=sizeof(client.address);
-		client.fd=accept(device.fd,(sockaddr*)&client.address,&address_length);
+		socklen_t ip_length=sizeof(client.ip);
+		client.fd=accept(device.fd,(sockaddr*)&client.ip,&ip_length);
 	}
 
 	return client;
 }
 
-msl::socket::socket(const uint8_t* address,const uint16_t& port,bool host,const bool tcp)
+msl::socket::socket(const uint8_t* ip,const uint16_t& port,bool host,const bool tcp)
 {
-	device_m.address.sin_family=AF_INET;
-	memcpy(&device_m.address.sin_addr,address,4);
-	device_m.address.sin_port=htons(port);
+	device_m.ip.sin_family=AF_INET;
+	memcpy(&device_m.ip.sin_addr,ip,4);
+	device_m.ip.sin_port=htons(port);
 	device_m.host=host;
 	device_m.tcp=tcp;
 }
 
 msl::socket::socket(const msl::socket_device_t& device):device_m(device)
 {}
+
+msl::socket::socket(const std::string& address,bool host,const bool tcp)
+{
+	uint8_t ip[4];
+	uint16_t port;
+	string_to_rawaddr(address,ip,port);
+	device_m.ip.sin_family=AF_INET;
+	memcpy(&device_m.ip.sin_addr,ip,4);
+	device_m.ip.sin_port=htons(port);
+	device_m.host=host;
+	device_m.tcp=tcp;
+}
 
 void msl::socket::open()
 {
