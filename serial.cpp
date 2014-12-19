@@ -353,3 +353,8 @@ ssize_t msl::serial::write(const void* buf,const size_t count) const
 {
 	return serial_write(device_m,buf,count);
 }
+
+ssize_t msl::serial::write(const std::string& buf) const
+{
+	return serial_write(device_m,buf.c_str(),buf.size());
+}

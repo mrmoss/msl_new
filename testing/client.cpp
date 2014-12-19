@@ -30,8 +30,7 @@ int main()
 	{
 		if(msl::millis()>=timer)
 		{
-			std::string data="hello server!\n";
-			c.write(data.c_str(),data.size());
+			c.write("hello server!\n");
 			timer=msl::millis()+1000;
 		}
 

@@ -43,8 +43,7 @@ int main()
 				if(temp=='\n')
 				{
 					std::cout<<"client said \""<<ii->second<<"\"."<<std::endl;
-					std::string response="\"You said \""+ii->second+"\".\n";
-					ii->first.write(response.c_str(),response.size());
+					ii->first.write("\"You said \""+ii->second+"\".\n");
 					ii->second="";
 				}
 				else

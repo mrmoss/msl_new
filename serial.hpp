@@ -39,6 +39,7 @@ namespace msl
 			ssize_t available() const;
 			ssize_t read(void* buf,const size_t count) const;
 			ssize_t write(const void* buf,const size_t count) const;
+			ssize_t write(const std::string& buf) const;
 
 		private:
 			serial_device_t device_m;

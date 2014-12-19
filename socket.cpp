@@ -174,6 +174,11 @@ ssize_t msl::socket::write(const void* buf,const size_t count) const
 	return socket_write(device_m,buf,count);
 }
 
+ssize_t msl::socket::write(const std::string& buf) const
+{
+	return socket_write(device_m,buf.c_str(),buf.size());
+}
+
 msl::socket msl::socket::accept()
 {
 	return msl::socket(socket_accept(device_m));
