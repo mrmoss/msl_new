@@ -6,6 +6,9 @@
 
 #if(defined(_WIN32)&&!defined(__CYGWIN__))
 	#include <winsock2.h>
+	#if(!defined(socklen_t))
+		typedef int socklen_t;
+	#endif
 #else
 	#include <netinet/in.h>
 	#include <unistd.h>
@@ -16,9 +19,6 @@ namespace msl
 {
 
 	#if(defined(_WIN32)&&!defined(__CYGWIN__))
-		#if(!defined(socklen_t))
-		typedef int socklen_t;
-		#endif
 		typedef HANDLE socket_fd_t;
 	#else
 		typedef int socket_fd_t;
