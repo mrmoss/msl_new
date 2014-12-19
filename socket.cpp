@@ -2,9 +2,15 @@
 
 #include <string.h>
 
+#define INVALID_SOCKET_VALUE (~0)
+
 #if(!defined(_WIN32)||defined(__CYGWIN__))
 	#include <signal.h>
-	#define INVALID_HANDLE_VALUE (-1)
+#else
+	int close(unsigned int fd)
+	{
+		return closesocket(fd);
+	}
 #endif
 
 static bool socket_inited=false;
@@ -48,18 +54,18 @@ static void socket_open(msl::socket_device_t& device)
 		int on=1;
 		socklen_t address_length=sizeof(device.address);
 
-		if(device.fd!=INVALID_HANDLE_VALUE)
+		if(device.fd!=INVALID_SOCKET_VALUE)
 		{
-			if(setsockopt(device.fd,SOL_SOCKET,SO_LINGER,&lingerer,sizeof(lingerer))!=0)
+			if(setsockopt(device.fd,SOL_SOCKET,SO_LINGER,(const char*)&lingerer,sizeof(lingerer))!=0)
 				socket_close(device);
 
-			if(setsockopt(device.fd,SOL_SOCKET,SO_REUSEADDR,&on,sizeof(on))!=0)
+			if(setsockopt(device.fd,SOL_SOCKET,SO_REUSEADDR,(const char*)&on,sizeof(on))!=0)
 				socket_close(device);
 
-			if(!device.tcp&&setsockopt(device.fd,SOL_SOCKET,SO_RCVBUF,&device.buffer_size,address_length)!=0)
+			if(!device.tcp&&setsockopt(device.fd,SOL_SOCKET,SO_RCVBUF,(const char*)&device.buffer_size,address_length)!=0)
 				socket_close(device);
 
-			if(!device.tcp&&setsockopt(device.fd,SOL_SOCKET,SO_SNDBUF,&device.buffer_size,address_length)!=0)
+			if(!device.tcp&&setsockopt(device.fd,SOL_SOCKET,SO_SNDBUF,(const char*)&device.buffer_size,address_length)!=0)
 				socket_close(device);
 
 			if(bind(device.fd,(sockaddr*)&device.address,sizeof(device.address))!=0)
@@ -72,7 +78,7 @@ static void socket_open(msl::socket_device_t& device)
 	else
 	{
 		if(connect(device.fd,(sockaddr*)&device.address,sizeof(device.address))!=0)
-			device.fd=INVALID_HANDLE_VALUE;
+			device.fd=INVALID_SOCKET_VALUE;
 	}
 }
 
@@ -80,13 +86,13 @@ static ssize_t socket_available(const msl::socket_device_t& device)
 {
 	socket_init();
 
-	if(device.fd==INVALID_HANDLE_VALUE)
+	if(device.fd==INVALID_SOCKET_VALUE)
 		return -1;
 
 	timeval temp={0,0};
 	fd_set rfds;
 	FD_ZERO(&rfds);
-	FD_SET(device.fd,&rfds);
+	FD_SET((unsigned int)device.fd,&rfds);
 
 	return select(1+device.fd,&rfds,nullptr,nullptr,&temp);
 }
@@ -107,7 +113,7 @@ static bool socket_valid(const msl::socket_device_t& device)
 {
 	socket_init();
 
-	if(device.fd==INVALID_HANDLE_VALUE)
+	if(device.fd==INVALID_SOCKET_VALUE)
 		return false;
 
 	char temp;
@@ -121,7 +127,7 @@ static bool socket_valid(const msl::socket_device_t& device)
 static msl::socket_device_t socket_accept(const msl::socket_device_t& device)
 {
 	socket_init();
-	msl::socket_device_t client{INVALID_HANDLE_VALUE,{},false,device.tcp,device.buffer_size};
+	msl::socket_device_t client{INVALID_SOCKET_VALUE,{},false,device.tcp,device.buffer_size};
 
 	if(socket_available(device)>0)
 	{

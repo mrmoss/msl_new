@@ -17,12 +17,7 @@
 
 namespace msl
 {
-
-	#if(defined(_WIN32)&&!defined(__CYGWIN__))
-		typedef HANDLE socket_fd_t;
-	#else
-		typedef int socket_fd_t;
-	#endif
+	typedef int socket_fd_t;
 
 	struct socket_device_t
 	{
