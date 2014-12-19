@@ -5,18 +5,18 @@
 #include <vector>
 
 #if(defined(_WIN32)&&!defined(__CYGWIN__))
-#include <conio.h>
-#include <stdio.h>
-#include <windows.h>
-#include <commctrl.h>
+	#include <conio.h>
+	#include <stdio.h>
+	#include <windows.h>
+	#include <commctrl.h>
 #endif
 
 namespace msl
 {
 	#if(defined(_WIN32)&&!defined(__CYGWIN__))
-	typedef HANDLE serial_fd_t;
+		typedef HANDLE serial_fd_t;
 	#else
-	typedef ssize_t serial_fd_t;
+		typedef ssize_t serial_fd_t;
 	#endif
 
 	struct serial_device_t

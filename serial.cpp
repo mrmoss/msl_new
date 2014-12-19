@@ -292,7 +292,7 @@ std::vector<std::string> msl::serial::list()
 
 #endif
 
-ssize_t serial_available(const msl::serial_device_t& device)
+static ssize_t serial_available(const msl::serial_device_t& device)
 {
 	if(!serial_valid(device))
 		return -1;
@@ -300,7 +300,7 @@ ssize_t serial_available(const msl::serial_device_t& device)
 	return select(device);
 }
 
-ssize_t serial_read(const msl::serial_device_t& device,void* buffer,const size_t size)
+static ssize_t serial_read(const msl::serial_device_t& device,void* buffer,const size_t size)
 {
 	if(!serial_valid(device))
 		return -1;
@@ -308,7 +308,7 @@ ssize_t serial_read(const msl::serial_device_t& device,void* buffer,const size_t
 	return read(device.fd,(char*)buffer,size);
 }
 
-ssize_t serial_write(const msl::serial_device_t& device,const void* buffer,const size_t size)
+static ssize_t serial_write(const msl::serial_device_t& device,const void* buffer,const size_t size)
 {
 	if(!serial_valid(device))
 		return -1;
