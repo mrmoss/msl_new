@@ -1,11 +1,11 @@
-#ifndef MSL_C11_JOYSTICK_HPP
-#define MSL_C11_JOYSTICK_HPP
-
 //Windows Dependencies:
 //		-lhid -lpthread
 
 //Linux Dependencies:
 //		-lpthread
+
+#ifndef MSL_C11_JOYSTICK_HPP
+#define MSL_C11_JOYSTICK_HPP
 
 #include <mutex>
 #include <string>

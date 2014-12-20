@@ -1,9 +1,11 @@
+//Windows Dependencies:
+//		-lWs2_32
+
 #ifndef MSL_C11_SOCKET_HPP
 #define MSL_C11_SOCKET_HPP
 
 #include <cstdint>
 #include <string>
-#include <vector>
 
 #if(defined(_WIN32)&&!defined(__CYGWIN__))
 	#include <winsock2.h>

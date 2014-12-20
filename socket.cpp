@@ -1,3 +1,6 @@
+//Windows Dependencies:
+//		-lWs2_32
+
 #include "socket.hpp"
 
 #include <stdexcept>
