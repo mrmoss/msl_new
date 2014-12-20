@@ -241,7 +241,7 @@ static bool socket_valid(const msl::socket_device_t& device)
 
 	char temp;
 
-	if(socket_available(device)>0&&socket_read(device,&temp,1,MSG_PEEK)<=0)
+	if(socket_available(device)>0&&socket_read(device,&temp,1,MSG_PEEK)==0)
 		return false;
 
 	return (socket_available(device)>=0);
@@ -285,6 +285,7 @@ void msl::socket::open()
 void msl::socket::close()
 {
 	socket_close(device_m);
+	device_m.fd=INVALID_SOCKET_VALUE;
 }
 
 bool msl::socket::good() const
