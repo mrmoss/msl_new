@@ -241,7 +241,7 @@ static bool socket_valid(const msl::socket_device_t& device)
 
 	char temp;
 
-	if(socket_available(device)>0&&socket_read(device,&temp,1,MSG_PEEK)==0)
+	if(socket_available(device)>0&&socket_read(device,&temp,1,MSG_PEEK)<=0)
 		return false;
 
 	return (socket_available(device)>=0);
@@ -261,8 +261,12 @@ static msl::socket_device_t socket_accept(const msl::socket_device_t& device)
 	return client;
 }
 
-msl::socket::socket(const uint8_t* ip,const uint16_t& port,bool host,const bool tcp)
+msl::socket::socket(const std::string& address,bool host,const bool tcp)
 {
+	uint8_t ip[4];
+	uint16_t port;
+	device_m.fd=INVALID_SOCKET_VALUE;
+	string_to_rawaddr(address,ip,port);
 	device_m.ip.sin_family=AF_INET;
 	memcpy(&device_m.ip.sin_addr,ip,4);
 	device_m.ip.sin_port=htons(port);
@@ -272,18 +276,6 @@ msl::socket::socket(const uint8_t* ip,const uint16_t& port,bool host,const bool 
 
 msl::socket::socket(const msl::socket_device_t& device):device_m(device)
 {}
-
-msl::socket::socket(const std::string& address,bool host,const bool tcp)
-{
-	uint8_t ip[4];
-	uint16_t port;
-	string_to_rawaddr(address,ip,port);
-	device_m.ip.sin_family=AF_INET;
-	memcpy(&device_m.ip.sin_addr,ip,4);
-	device_m.ip.sin_port=htons(port);
-	device_m.host=host;
-	device_m.tcp=tcp;
-}
 
 void msl::socket::open()
 {
@@ -325,30 +317,8 @@ msl::socket msl::socket::accept()
 	return msl::socket(socket_accept(device_m));
 }
 
-msl::tcp_socket::tcp_socket(const uint8_t* ip,const uint16_t& port,bool host):msl::socket(ip,port,host,true)
-{}
-
-msl::tcp_socket::tcp_socket(const msl::socket_device_t& device):msl::socket(device)
-{
-	device_m.tcp=true;
-}
-
 msl::tcp_socket::tcp_socket(const std::string& address,bool host):msl::socket(address,host,true)
 {}
-
-msl::udp_socket::udp_socket(const uint8_t* ip,const uint16_t& port,const size_t buffer_size):
-	msl::socket(ip,port,false,false)
-{
-	device_m.buffer_size=buffer_size;
-}
-
-msl::udp_socket::udp_socket(const msl::socket_device_t& device,const size_t buffer_size):
-	msl::socket(device)
-{
-	device_m.host=false;
-	device_m.tcp=false;
-	device_m.buffer_size=buffer_size;
-}
 
 msl::udp_socket::udp_socket(const std::string& address,const size_t buffer_size):
 	msl::socket(address,false,false)

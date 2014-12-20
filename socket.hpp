@@ -53,16 +53,12 @@ namespace msl
 	class tcp_socket:public socket
 	{
 		public:
-			tcp_socket(const uint8_t* ip,const uint16_t& port,bool host);
-			tcp_socket(const socket_device_t& device);
 			tcp_socket(const std::string& address,bool host);
 	};
 
 	class udp_socket:public socket
 	{
 		public:
-			udp_socket(const uint8_t* ip,const uint16_t& port,const size_t buffer_size);
-			udp_socket(const socket_device_t& device,const size_t buffer_size);
 			udp_socket(const std::string& address,const size_t buffer_size);
 	};
 }
