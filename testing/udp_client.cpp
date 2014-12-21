@@ -7,7 +7,10 @@
 
 int main()
 {
-	msl::udp_socket c("127.0.0.1:8081",2048);
+	const size_t buffer_size=200;
+	const char filler='b';
+	//msl::socket c("127.0.0.1:8080","127.0.0.1:8081",false,false,buffer_size);
+	msl::socket c("127.0.0.1:8081","127.0.0.1:8080",false,false,buffer_size);
 	c.open();
 
 	if(!c.good())
@@ -16,7 +19,7 @@ int main()
 		return 0;
 	}
 
-	std::cout<<":)"<<std::endl;
+	std::cout<<":)\t"<<c.address()<<std::endl;
 
 	auto timer=msl::millis()+1000;
 
@@ -27,16 +30,16 @@ int main()
 		{
 			std::cout<<"sending packet!"<<std::endl;
 			std::string data;
-			for(int ii=0;ii<2048;++ii)
-				data+='a';
+			for(size_t ii=0;ii<buffer_size;++ii)
+				data+=filler;
 			c.write(data);
 			timer=msl::millis()+1000;
 		}
 
-		/*char temp[2048];
+		char temp[buffer_size];
 
-		while(c.available()>0&&c.read(temp,2048)==2048)
-			std::cout<<"received packet!"<<std::endl;*/
+		while(c.available()>0&&c.read(temp,buffer_size)==buffer_size)
+			std::cout<<"received packet!\t"<<temp[0]<<std::endl;
 
 		msl::delay_ms(1);
 	}

@@ -8,7 +8,7 @@
 
 int main()
 {
-	msl::tcp_socket s("127.0.0.1:8080",true);
+	msl::socket s("0.0.0.0:8080","0.0.0.0:0",true,true);
 	s.open();
 
 	if(!s.good())
@@ -17,7 +17,7 @@ int main()
 		return 0;
 	}
 
-	std::cout<<":)"<<std::endl;
+	std::cout<<":)\t"<<s.address()<<std::endl;
 
 	std::vector<std::pair<msl::socket,std::string>> clients;
 
