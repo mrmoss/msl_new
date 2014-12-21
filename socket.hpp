@@ -35,7 +35,7 @@ namespace msl
 	class socket
 	{
 		public:
-			socket(const std::string& ip_bind,const std::string& ip_connect,bool host,const bool tcp,const size_t buffer_size=200);
+			socket(const std::string& ip,const bool tcp,const size_t buffer_size=200);
 			socket(const socket_device_t& device);
 			virtual void open();
 			virtual void close();
@@ -46,9 +46,22 @@ namespace msl
 			virtual ssize_t write(const std::string& buf) const;
 			virtual socket accept() const;
 			virtual std::string address() const;
+			size_t buffer_size() const;
 
 		protected:
 			socket_device_t device_m;
+	};
+
+	class tcp_socket:public socket
+	{
+		public:
+			tcp_socket(const std::string& ip);
+	};
+
+	class udp_socket:public socket
+	{
+		public:
+			udp_socket(const std::string& ip,const size_t buffer_size=200);
 	};
 }
 

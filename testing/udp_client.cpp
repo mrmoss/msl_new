@@ -9,8 +9,8 @@ int main()
 {
 	const size_t buffer_size=200;
 	const char filler='b';
-	//msl::socket c("127.0.0.1:8080","127.0.0.1:8081",false,false,buffer_size);
-	msl::socket c("127.0.0.1:8081","127.0.0.1:8080",false,false,buffer_size);
+	msl::udp_socket c("127.0.0.1:8080>127.0.0.1:8081",buffer_size);
+	//msl::udp_socket c("127.0.0.1:8081>127.0.0.1:8080",buffer_size);
 	c.open();
 
 	if(!c.good())

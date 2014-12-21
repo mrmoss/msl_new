@@ -1,5 +1,7 @@
 testing/test
 testing/test.exe
+testing/server
+testing/server.exe
 testing/client
 testing/client.exe
 testing/udp_client

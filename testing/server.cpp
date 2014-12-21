@@ -8,7 +8,7 @@
 
 int main()
 {
-	msl::socket s("0.0.0.0:8080","0.0.0.0:0",true,true);
+	msl::tcp_socket s("0.0.0.0:8080<0.0.0.0:0");
 	s.open();
 
 	if(!s.good())
@@ -27,7 +27,7 @@ int main()
 
 		if(client.good())
 		{
-			std::cout<<"new client"<<std::endl;
+			std::cout<<"new client\t"<<client.address()<<std::endl;
 			clients.push_back({client,""});
 		}
 
@@ -52,7 +52,7 @@ int main()
 			if(!ii->first.good())
 			{
 				ii=clients.erase(ii);
-				std::cout<<"client disconnected"<<std::endl;
+				std::cout<<"client disconnected\t"<<client.address()<<std::endl;
 			}
 			else
 			{

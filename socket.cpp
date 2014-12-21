@@ -17,133 +17,117 @@
 	}
 #endif
 
-void string_to_rawaddr(std::string str,uint8_t* ip,uint16_t& port)
+static size_t parse_integer(const std::string& str,const size_t pos,int& integer)
 {
-	uint8_t temp_ip[4];
-	uint16_t temp_port;
-
-	bool saw_colon=false;
-	int state=0;
-	int dot_count=0;
-	size_t start=0;
-	bool finished=false;
-
-	for(size_t ii=0;ii<str.size();++ii)
+	for(size_t ii=pos;ii<str.size();++ii)
 	{
-		if(state==0&&isdigit(str[ii])!=0)
+		if(isdigit(str[ii])==0)
 		{
-			start=ii;
+			if(ii-pos==0)
+				break;
 
-			if(dot_count==3&&saw_colon)
-			{
-				state=3;
-
-				if(ii==str.size()-1)
-					--ii;
-			}
-			else if(dot_count==3)
-			{
-				state=2;
-			}
-			else
-			{
-				state=1;
-			}
+			integer=std::stoi(str.substr(pos,ii-pos));
+			return ii;
 		}
-		else if(state==1)
+
+		if(isdigit(str[ii])!=0&&ii==str.size()-1)
 		{
-
-			if(isdigit(str[ii])==0)
-			{
-				if(str[ii]=='.')
-				{
-					++dot_count;
-
-					if(dot_count>3)
-					{
-						state=-1;
-					}
-					else
-					{
-						auto check=std::stoi(str.substr(start,ii+1-start));
-
-						if(check>=0&&check<=255)
-						{
-							temp_ip[dot_count-1]=check;
-							state=0;
-						}
-						else
-						{
-							state=-1;
-						}
-					}
-				}
-				else
-				{
-					state=-1;
-				}
-			}
-		}
-		else if(state==2)
-		{
-			if(isdigit(str[ii])==0)
-			{
-				if(str[ii]==':')
-				{
-					if(saw_colon)
-					{
-						state=-1;
-					}
-					else
-					{
-						auto check=std::stoi(str.substr(start,ii+1-start));
-
-						if(check>=0&&check<=255)
-						{
-							temp_ip[dot_count]=check;
-							saw_colon=true;
-							state=0;
-						}
-						else
-						{
-							state=-1;
-						}
-					}
-				}
-				else
-				{
-					state=-1;
-				}
-			}
-		}
-		else if(state==3)
-		{
-			if(isdigit(str[ii])==0)
-			{
-				state=-1;
-			}
-			else if(ii==str.size()-1)
-			{
-				auto check=std::stoi(str.substr(start,ii+1-start));
-
-				if(check>=0&&check<=65535)
-				{
-					finished=true;
-					temp_port=check;
-				}
-			}
-		}
-		else
-		{
-			break;
+			integer=std::stoi(str.substr(pos,ii-pos+1));
+			return ii+1;
 		}
 	}
 
-	if(!finished)
-		throw std::runtime_error("void string_to_rawaddr(std::string str,uint8_t* ip,uint16_t& port) - Invalid ip string!");
+	return std::string::npos;
+}
 
-	memcpy(ip,temp_ip,4);
-	port=temp_port;
+static bool parse_symbol(const std::string& str,const size_t pos,const char sym)
+{
+	return (pos<str.size()&&str[pos]==sym);
+}
+
+static void string_to_rawaddr(std::string str,uint8_t* ip_bind,uint16_t& port_bind,bool& host,
+	uint8_t* ip_connect,uint16_t& port_connect)
+{
+	int temp_ip[8];
+	int temp_port[2];
+	bool temp_host=false;
+	size_t pos=0;
+	bool error=false;
+
+	memset(temp_ip,0,4*8);
+	memset(temp_port,0,4*2);
+
+	for(int ii=0;ii<2;++ii)
+	{
+		for(int jj=0;jj<4;++jj)
+		{
+			pos=parse_integer(str,pos,temp_ip[ii*4+jj]);
+
+			if(pos!=std::string::npos)
+			{
+				if(jj<3&&parse_symbol(str,pos,'.'))
+					++pos;
+			}
+			else
+			{
+				error=true;
+				break;
+			}
+
+			if(temp_ip[ii*4+jj]<0||temp_ip[ii*4+jj]>255)
+			{
+				error=true;
+				break;
+			}
+		}
+
+		if(!error)
+		{
+			if(parse_symbol(str,pos,':'))
+			{
+				++pos;
+				pos=parse_integer(str,pos,temp_port[ii]);
+				error=(pos==std::string::npos);
+
+				if(!error&&(temp_port[ii]<0||temp_port[ii]>65535))
+				{
+					error=true;
+					break;
+				}
+			}
+		}
+
+		if(!error&&ii==0)
+		{
+			if(parse_symbol(str,pos,'<')||parse_symbol(str,pos,'>'))
+			{
+				temp_host=parse_symbol(str,pos,'<');
+				++pos;
+			}
+			else
+			{
+				error=true;
+			}
+		}
+
+		if(error)
+			break;
+	}
+
+	if(error)
+		throw std::invalid_argument("string_to_rawaddr");
+
+	for(int ii=0;ii<4;++ii)
+		ip_bind[ii]=temp_ip[ii];
+
+	port_bind=temp_port[0];
+
+	host=temp_host;
+
+	for(int ii=0;ii<4;++ii)
+		ip_connect[ii]=temp_ip[4+ii];
+
+	port_connect=temp_port[1];
 }
 
 static bool socket_inited=false;
@@ -262,39 +246,38 @@ static bool socket_valid(const msl::socket_device_t& device)
 static msl::socket_device_t socket_accept(const msl::socket_device_t& device)
 {
 	socket_init();
-	msl::socket_device_t client{INVALID_SOCKET_VALUE,{},{},false,device.tcp,device.buffer_size};
+	msl::socket_device_t client{INVALID_SOCKET_VALUE,{},device.ip_connect,false,device.tcp,device.buffer_size};
 
 	if(socket_available(device)>0)
 	{
 		socklen_t ip_length=sizeof(socklen_t);
 		client.fd=accept(device.fd,(sockaddr*)&client.ip_bind,&ip_length);
 
-		if(socket_valid(client)&&getsockname(client.fd,(sockaddr*)&client.ip_bind,&ip_length)!=0)
+		if(socket_valid(client)&&getsockname(client.fd,(sockaddr*)&client.ip_connect,&ip_length)!=0)
 			socket_close(client);
 	}
 
 	return client;
 }
 
-msl::socket::socket(const std::string& ip_bind,const std::string& ip_connect,bool host,const bool tcp,const size_t buffer_size)
+msl::socket::socket(const std::string& ip,const bool tcp,const size_t buffer_size)
 {
-	uint8_t ip[4];
-	uint16_t port;
+	bool host;
+	uint8_t ip_bind[4];
+	uint8_t ip_connect[4];
+	uint16_t port_bind;
+	uint16_t port_connect;
 
+	string_to_rawaddr(ip,ip_bind,port_bind,host,ip_connect,port_connect);
 	device_m.fd=INVALID_SOCKET_VALUE;
 
-	string_to_rawaddr(ip_bind,ip,port);
 	device_m.ip_bind.sin_family=AF_INET;
-	memcpy(&device_m.ip_bind.sin_addr,ip,4);
-	device_m.ip_bind.sin_port=htons(port);
+	memcpy(&device_m.ip_bind.sin_addr,ip_bind,4);
+	device_m.ip_bind.sin_port=htons(port_bind);
 
-	memset(ip,0,4);
-	port=0;
-
-	string_to_rawaddr(ip_connect,ip,port);
 	device_m.ip_connect.sin_family=AF_INET;
-	memcpy(&device_m.ip_connect.sin_addr,ip,4);
-	device_m.ip_connect.sin_port=htons(port);
+	memcpy(&device_m.ip_connect.sin_addr,ip_connect,4);
+	device_m.ip_connect.sin_port=htons(port_connect);
 
 	device_m.buffer_size=buffer_size;
 	device_m.host=host;
@@ -375,3 +358,14 @@ std::string msl::socket::address() const
 
 	return address;
 }
+
+size_t msl::socket::buffer_size() const
+{
+	return device_m.buffer_size;
+}
+
+msl::tcp_socket::tcp_socket(const std::string& ip):socket(ip,true)
+{}
+
+msl::udp_socket::udp_socket(const std::string& ip,const size_t buffer_size):socket(ip,false,buffer_size)
+{}
