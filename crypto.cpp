@@ -150,7 +150,7 @@ bool decrypt_aes(const void* cipher,const size_t size,const std::string& key,con
 	int temp_length;
 	int temp_unaligned_length;
 
-	if(ctx!=nullptr&&EVP_CIPHER_CTX_set_padding(ctx,1)!=0&&
+	if(ctx!=nullptr&&
 		EVP_DecryptInit_ex(ctx,EVP_aes_256_cbc(),nullptr,(uint8_t*)key.c_str(),(uint8_t*)iv.c_str())!=0&&
 		EVP_DecryptUpdate(ctx,temp_data,&temp_length,(uint8_t*)cipher,size)!=0&&
 		EVP_DecryptFinal_ex(ctx,temp_data+temp_length,&temp_unaligned_length)!=0)
