@@ -1,7 +1,6 @@
 #include "../crypto.hpp"
 #include <iostream>
 #include <string>
-#include <fstream>
 
 //RSA Keys
 std::string publickey="-----BEGIN PUBLIC KEY-----\n"\
