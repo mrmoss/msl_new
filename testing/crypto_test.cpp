@@ -49,8 +49,10 @@ int main()
 	std::string plaintext="Hello world!";
 	std::string encryptedtext="";
 	std::string decryptedtext="";
+	std::string hash="";
 
 	//RSA Testing
+	std::cout<<"RSA"<<std::endl;
 	if(!encrypt_rsa(plaintext,publickey,encryptedtext))
 	{
 		std::cout<<"could not rsa encrypt data!"<<std::endl;
@@ -61,34 +63,43 @@ int main()
 		std::cout<<"could not rsa decrypt data!"<<std::endl;
 		return 0;
 	}
-	std::cout<<"RSA"<<std::endl;
 	std::cout<<"|"<<encryptedtext<<"|"<<std::endl;
 	std::cout<<"|"<<decryptedtext<<"|"<<std::endl;
 	std::cout<<std::endl;
 
 	//AES Testing
+	std::cout<<"AES256"<<std::endl;
 	if(!encrypt_aes256(plaintext,key,iv,encryptedtext))
 	{
-		std::cout<<"could not aes encrypt data!"<<std::endl;
+		std::cout<<"could not aes256 encrypt data!"<<std::endl;
 		return 0;
 	}
 	if(!decrypt_aes256(encryptedtext,key,iv,decryptedtext))
 	{
-		std::cout<<"could not aes decrypt data!"<<std::endl;
+		std::cout<<"could not aes256 decrypt data!"<<std::endl;
 		return 0;
 	}
-	std::cout<<"AES256"<<std::endl;
 	std::cout<<"|"<<encryptedtext<<"|"<<std::endl;
 	std::cout<<"|"<<decryptedtext<<"|"<<std::endl;
 	std::cout<<std::endl;
 
 	//SHA Testing
 	std::cout<<"SHA256"<<std::endl;
-	std::cout<<"|"<<hash_sha256(plaintext)<<"|"<<std::endl;
+	if(!hash_sha256(plaintext,hash))
+	{
+		std::cout<<"could not sha256 hash data!"<<std::endl;
+		return 0;
+	}
+	std::cout<<"|"<<hash<<"|"<<std::endl;
 	std::cout<<std::endl;
 
 	std::cout<<"SHA512"<<std::endl;
-	std::cout<<"|"<<hash_sha512(plaintext)<<"|"<<std::endl;
+	if(!hash_sha512(plaintext,hash))
+	{
+		std::cout<<"could not sha512 hash data!"<<std::endl;
+		return 0;
+	}
+	std::cout<<"|"<<hash<<"|"<<std::endl;
 	std::cout<<std::endl;
 
 	return 0;

@@ -174,28 +174,36 @@ bool decrypt_aes256(const std::string& cipher,const std::string& key,const std::
 	return decrypt_aes256(cipher.c_str(),cipher.size(),key,iv,plain);
 }
 
-std::string hash_sha256(const std::string& plain)
+bool hash_sha256(const std::string& plain,std::string& hash)
 {
-	std::string hash;
-	hash.resize(SHA256_DIGEST_LENGTH);
+	std::string temp_hash;
+	temp_hash.resize(SHA256_DIGEST_LENGTH);
 
 	SHA256_CTX ctx;
-	SHA256_Init(&ctx);
-	SHA256_Update(&ctx,(unsigned char*)plain.c_str(),plain.size());
-	SHA256_Final((unsigned char*)hash.c_str(),&ctx);
 
-	return hash;
+	if(SHA256_Init(&ctx)==1&&SHA256_Update(&ctx,(unsigned char*)plain.c_str(),plain.size())==1&&
+		SHA256_Final((unsigned char*)temp_hash.c_str(),&ctx)==1)
+	{
+		hash=temp_hash;
+		return true;
+	}
+
+	return false;
 }
 
-std::string hash_sha512(const std::string& plain)
+bool hash_sha512(const std::string& plain,std::string& hash)
 {
-	std::string hash;
-	hash.resize(SHA512_DIGEST_LENGTH);
+	std::string temp_hash;
+	temp_hash.resize(SHA512_DIGEST_LENGTH);
 
 	SHA512_CTX ctx;
-	SHA512_Init(&ctx);
-	SHA512_Update(&ctx,(unsigned char*)plain.c_str(),plain.size());
-	SHA512_Final((unsigned char*)hash.c_str(),&ctx);
 
-	return hash;
+	if(SHA512_Init(&ctx)==1&&SHA512_Update(&ctx,(unsigned char*)plain.c_str(),plain.size())==1&&
+		SHA512_Final((unsigned char*)temp_hash.c_str(),&ctx)==1)
+	{
+		hash=temp_hash;
+		return true;
+	}
+
+	return false;
 }
