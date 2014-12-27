@@ -16,8 +16,6 @@ msl
 	-hardware
 		joystick
 			close/list/open/read
-		webcam?
-			close/list/open/read
 	-math
 		matrix
 		vector
@@ -36,9 +34,9 @@ msl
 			delay
 			millis
 	-crypto
-		rsa
 			encrypt/decrypt
-		aes
-			encrypt/decrypt
-		sha
+				rsa
+				aes
 			hash
+				md5
+				sha

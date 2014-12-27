@@ -6,12 +6,8 @@ msl
 			keyboard/mouse
 				read
 		sprite
-	-hardware
-		webcam?
-			close/list/open/read
 	-utility
 		file
-			file_to_string/string_to_file
 			list_directories/list_files
 		json
 			from_string/to_string
