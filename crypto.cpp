@@ -4,6 +4,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
+#include <openssl/sha.h>
 #include <cstdint>
 
 #define RSA_PKCS1_PADDING_SIZE			11
@@ -105,7 +106,7 @@ bool decrypt_rsa(const std::string& cipher,const std::string& key,std::string& p
 	return decrypt_rsa(cipher.c_str(),cipher.size(),key,plain);
 }
 
-bool encrypt_aes(const void* plain,const size_t size,const std::string& key,const std::string& iv,std::string& cipher)
+bool encrypt_aes256(const void* plain,const size_t size,const std::string& key,const std::string& iv,std::string& cipher)
 {
 	bool success=false;
 	ERR_load_crypto_strings();
@@ -134,12 +135,12 @@ bool encrypt_aes(const void* plain,const size_t size,const std::string& key,cons
 	return success;
 }
 
-bool encrypt_aes(const std::string& plain,const std::string& key,const std::string& iv,std::string& cipher)
+bool encrypt_aes256(const std::string& plain,const std::string& key,const std::string& iv,std::string& cipher)
 {
-	return encrypt_aes(plain.c_str(),plain.size(),key,iv,cipher);
+	return encrypt_aes256(plain.c_str(),plain.size(),key,iv,cipher);
 }
 
-bool decrypt_aes(const void* cipher,const size_t size,const std::string& key,const std::string& iv,std::string& plain)
+bool decrypt_aes256(const void* cipher,const size_t size,const std::string& key,const std::string& iv,std::string& plain)
 {
 	bool success=false;
 	ERR_load_crypto_strings();
@@ -168,7 +169,20 @@ bool decrypt_aes(const void* cipher,const size_t size,const std::string& key,con
 	return success;
 }
 
-bool decrypt_aes(const std::string& cipher,const std::string& key,const std::string& iv,std::string& plain)
+bool decrypt_aes256(const std::string& cipher,const std::string& key,const std::string& iv,std::string& plain)
 {
-	return decrypt_aes(cipher.c_str(),cipher.size(),key,iv,plain);
+	return decrypt_aes256(cipher.c_str(),cipher.size(),key,iv,plain);
+}
+
+std::string hash_sha256(const std::string& plain)
+{
+	std::string hash;
+	hash.resize(SHA256_DIGEST_LENGTH);
+
+	SHA256_CTX ctx;
+	SHA256_Init(&ctx);
+	SHA256_Update(&ctx,(unsigned char*)plain.c_str(),plain.size());
+	SHA256_Final((unsigned char*)hash.c_str(),&ctx);
+
+	return hash;
 }

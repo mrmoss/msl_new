@@ -14,9 +14,11 @@ bool encrypt_rsa(const std::string& plain,const std::string& key,std::string& ci
 bool decrypt_rsa(const void* cipher,const size_t size,const std::string& key,std::string& plain);
 bool decrypt_rsa(const std::string& cipher,const std::string& key,std::string& plain);
 
-bool encrypt_aes(const void* buffer,const size_t size,const std::string& key,const std::string& iv,std::string& cipher);
-bool encrypt_aes(const std::string& plain,const std::string& key,const std::string& iv,std::string& cipher);
-bool decrypt_aes(const void* buffer,const size_t size,const std::string& key,const std::string& iv,std::string& plain);
-bool decrypt_aes(const std::string& cipher,const std::string& key,const std::string& iv,std::string& plain);
+bool encrypt_aes256(const void* buffer,const size_t size,const std::string& key,const std::string& iv,std::string& cipher);
+bool encrypt_aes256(const std::string& plain,const std::string& key,const std::string& iv,std::string& cipher);
+bool decrypt_aes256(const void* buffer,const size_t size,const std::string& key,const std::string& iv,std::string& plain);
+bool decrypt_aes256(const std::string& cipher,const std::string& key,const std::string& iv,std::string& plain);
+
+std::string hash_sha256(const std::string& plain);
 
 #endif
