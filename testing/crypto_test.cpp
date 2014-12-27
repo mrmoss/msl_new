@@ -1,5 +1,9 @@
 #include "../crypto.hpp"
+#include "../string.hpp"
+#include <algorithm>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 //RSA Keys
@@ -44,9 +48,12 @@ std::string privatekey="-----BEGIN RSA PRIVATE KEY-----\n"\
 std::string key="01234567890123456789012345678901";
 std::string iv="01234567890123456";
 
+//HMAC Key
+std::string hmac_key="key";
+
 int main()
 {
-	std::string plaintext="Hello world!";
+	std::string plaintext="The quick brown fox jumps over the lazy dog";
 	std::string encryptedtext="";
 	std::string decryptedtext="";
 	std::string hash="";
@@ -63,8 +70,8 @@ int main()
 		std::cout<<"could not rsa decrypt data!"<<std::endl;
 		return 0;
 	}
-	std::cout<<"|"<<encryptedtext<<"|"<<std::endl;
-	std::cout<<"|"<<decryptedtext<<"|"<<std::endl;
+	std::cout<<msl::to_hex_string(encryptedtext)<<std::endl;
+	std::cout<<decryptedtext<<std::endl;
 	std::cout<<std::endl;
 
 	//AES Testing
@@ -79,8 +86,8 @@ int main()
 		std::cout<<"could not aes256 decrypt data!"<<std::endl;
 		return 0;
 	}
-	std::cout<<"|"<<encryptedtext<<"|"<<std::endl;
-	std::cout<<"|"<<decryptedtext<<"|"<<std::endl;
+	std::cout<<msl::to_hex_string(encryptedtext)<<std::endl;
+	std::cout<<decryptedtext<<std::endl;
 	std::cout<<std::endl;
 
 	//SHA Testing
@@ -90,7 +97,7 @@ int main()
 		std::cout<<"could not sha256 hash data!"<<std::endl;
 		return 0;
 	}
-	std::cout<<"|"<<hash<<"|"<<std::endl;
+	std::cout<<msl::to_hex_string(hash)<<std::endl;
 	std::cout<<std::endl;
 
 	std::cout<<"SHA512"<<std::endl;
@@ -99,7 +106,27 @@ int main()
 		std::cout<<"could not sha512 hash data!"<<std::endl;
 		return 0;
 	}
-	std::cout<<"|"<<hash<<"|"<<std::endl;
+	std::cout<<msl::to_hex_string(hash)<<std::endl;
+	std::cout<<std::endl;
+
+	//HMAC 256 Testing
+	std::cout<<"HMAC_SHA256"<<std::endl;
+	if(!hmac_sha256("key","The quick brown fox jumps over the lazy dog",hash))
+	{
+		std::cout<<"could not hmac_sha256 hash data!"<<std::endl;
+		return 0;
+	}
+	std::cout<<msl::to_hex_string(hash)<<std::endl;
+	std::cout<<std::endl;
+
+	//HMAC 512 Testing
+	std::cout<<"HMAC_SHA512"<<std::endl;
+	if(!hmac_sha512(hmac_key,plaintext,hash))
+	{
+		std::cout<<"could not hmac_sha512 hash data!"<<std::endl;
+		return 0;
+	}
+	std::cout<<msl::to_hex_string(hash)<<std::endl;
 	std::cout<<std::endl;
 
 	return 0;

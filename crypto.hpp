@@ -22,4 +22,7 @@ bool decrypt_aes256(const std::string& cipher,const std::string& key,const std::
 bool hash_sha256(const std::string& plain,std::string& hash);
 bool hash_sha512(const std::string& plain,std::string& hash);
 
+bool hmac_sha256(std::string key,const std::string& plain,std::string& hash);
+bool hmac_sha512(std::string key,const std::string& plain,std::string& hash);
+
 #endif

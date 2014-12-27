@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <ctype.h>
+#include <iomanip>
+#include <sstream>
 
 std::string msl::to_lower(std::string str)
 {
@@ -13,6 +15,17 @@ std::string msl::to_upper(std::string str)
 {
 	std::transform(str.begin(),str.end(),str.begin(),toupper);
 	return str;
+}
+
+std::string msl::to_hex_string(const std::string& str)
+{
+	std::ostringstream ostr;
+	ostr<<"0x";
+
+	for(auto ii:str)
+		ostr<<std::hex<<std::setw(2)<<std::setfill('0')<<((int)ii&0x000000ff);
+
+	return ostr.str();
 }
 
 std::string msl::replace_all(std::string str,const std::string& find,const std::string& replace)
