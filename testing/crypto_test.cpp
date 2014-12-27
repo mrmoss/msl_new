@@ -82,8 +82,13 @@ int main()
 	std::cout<<"|"<<decryptedtext<<"|"<<std::endl;
 	std::cout<<std::endl;
 
+	//SHA Testing
 	std::cout<<"SHA256"<<std::endl;
 	std::cout<<"|"<<hash_sha256(plaintext)<<"|"<<std::endl;
+	std::cout<<std::endl;
+
+	std::cout<<"SHA512"<<std::endl;
+	std::cout<<"|"<<hash_sha512(plaintext)<<"|"<<std::endl;
 	std::cout<<std::endl;
 
 	return 0;

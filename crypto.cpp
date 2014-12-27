@@ -186,3 +186,16 @@ std::string hash_sha256(const std::string& plain)
 
 	return hash;
 }
+
+std::string hash_sha512(const std::string& plain)
+{
+	std::string hash;
+	hash.resize(SHA512_DIGEST_LENGTH);
+
+	SHA512_CTX ctx;
+	SHA512_Init(&ctx);
+	SHA512_Update(&ctx,(unsigned char*)plain.c_str(),plain.size());
+	SHA512_Final((unsigned char*)hash.c_str(),&ctx);
+
+	return hash;
+}

@@ -20,5 +20,6 @@ bool decrypt_aes256(const void* buffer,const size_t size,const std::string& key,
 bool decrypt_aes256(const std::string& cipher,const std::string& key,const std::string& iv,std::string& plain);
 
 std::string hash_sha256(const std::string& plain);
+std::string hash_sha512(const std::string& plain);
 
 #endif
