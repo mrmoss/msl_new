@@ -27,7 +27,7 @@ std::vector<std::string> msl::list_directories(const std::string& path)
 	{
 		std::string node_name=(file_descriptor.cFileName);
 
-		if(node_name!="."&&node_name!="..")
+		if(node_name!="."&&node_name!=".."&&(file_descriptor.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)!=0)
 			files.push_back(full_path_name+"\\"+node_name);
 	}
 	while(FindNextFile(file_handle,&file_descriptor));
