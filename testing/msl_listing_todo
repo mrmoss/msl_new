@@ -1,8 +1,4 @@
 msl
-	-communication
-		socket
-			tcp/udp
-				available/close/open/create/read/write
 	-graphics
 		2d/3d
 			shapes
@@ -23,5 +19,3 @@ msl
 		json
 			from_string/to_string
 			lookup
-
-test joystick on windows

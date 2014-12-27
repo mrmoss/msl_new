@@ -35,3 +35,10 @@ msl
 		time
 			delay
 			millis
+	-crypto
+		rsa
+			encrypt/decrypt
+		aes
+			encrypt/decrypt
+		sha
+			hash
