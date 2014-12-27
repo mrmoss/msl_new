@@ -1,5 +1,5 @@
 //Windows Dependencies:
-//		-lcrypto
+//		-lcrypto -lgdi32
 
 //Linux Dependencies:
 //		-lcrypto
