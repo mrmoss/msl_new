@@ -15,5 +15,13 @@ int main()
 	if(worked)
 		std::cout<<data<<std::endl;
 
+	for(auto file:msl::list_files(".."))
+		std::cout<<file<<std::endl;
+
+	std::cout<<std::endl;
+
+	for(auto dir:msl::list_directories(".."))
+		std::cout<<dir<<std::endl;
+
 	return 0;
 }

@@ -7,8 +7,6 @@ msl
 				read
 		sprite
 	-utility
-		file
-			list_directories/list_files
 		json
 			from_string/to_string
 			lookup
