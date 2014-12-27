@@ -9,9 +9,6 @@ msl
 	-hardware
 		webcam?
 			close/list/open/read
-	-math
-		matrix
-		vector
 	-utility
 		file
 			file_to_string/string_to_file

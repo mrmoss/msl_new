@@ -8,3 +8,5 @@ testing/udp_client
 testing/udp_client.exe
 testing/crypto_test
 testing/crypto_test.exe
+testing/vec_test
+testing/vec_test.exe
