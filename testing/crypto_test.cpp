@@ -90,7 +90,16 @@ int main()
 	std::cout<<decryptedtext<<std::endl;
 	std::cout<<std::endl;
 
-	//SHA Testing
+	//Hash Testing
+	std::cout<<"MD5"<<std::endl;
+	if(!hash_md5(plaintext,hash))
+	{
+		std::cout<<"could not md5 hash data!"<<std::endl;
+		return 0;
+	}
+	std::cout<<msl::to_hex_string(hash)<<std::endl;
+	std::cout<<std::endl;
+
 	std::cout<<"SHA256"<<std::endl;
 	if(!hash_sha256(plaintext,hash))
 	{
@@ -109,7 +118,16 @@ int main()
 	std::cout<<msl::to_hex_string(hash)<<std::endl;
 	std::cout<<std::endl;
 
-	//HMAC 256 Testing
+	//HMAC Testing
+	std::cout<<"HMAC_MD5"<<std::endl;
+	if(!hmac_md5("key","The quick brown fox jumps over the lazy dog",hash))
+	{
+		std::cout<<"could not hmac_md5 hash data!"<<std::endl;
+		return 0;
+	}
+	std::cout<<msl::to_hex_string(hash)<<std::endl;
+	std::cout<<std::endl;
+
 	std::cout<<"HMAC_SHA256"<<std::endl;
 	if(!hmac_sha256("key","The quick brown fox jumps over the lazy dog",hash))
 	{
@@ -119,7 +137,6 @@ int main()
 	std::cout<<msl::to_hex_string(hash)<<std::endl;
 	std::cout<<std::endl;
 
-	//HMAC 512 Testing
 	std::cout<<"HMAC_SHA512"<<std::endl;
 	if(!hmac_sha512(hmac_key,plaintext,hash))
 	{

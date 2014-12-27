@@ -1,7 +1,14 @@
+//Windows Dependencies:
+//		-lcrypto
+
+//Linux Dependencies:
+//		-lcrypto
+
 #include "crypto.hpp"
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/md5.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
@@ -10,6 +17,7 @@
 #define RSA_PKCS1_PADDING_SIZE			11
 #define RSA_PKCS1_OAEP_PADDING_SIZE		41
 
+#define MD5_BLOCK_SIZE					64
 #define SHA256_BLOCK_SIZE				64
 #define SHA512_BLOCK_SIZE				128
 
@@ -177,6 +185,23 @@ bool decrypt_aes256(const std::string& cipher,const std::string& key,const std::
 	return decrypt_aes256(cipher.c_str(),cipher.size(),key,iv,plain);
 }
 
+bool hash_md5(const std::string& plain,std::string& hash)
+{
+	std::string temp_hash;
+	temp_hash.resize(MD5_DIGEST_LENGTH);
+
+	MD5_CTX ctx;
+
+	if(MD5_Init(&ctx)==1&&MD5_Update(&ctx,(unsigned char*)plain.c_str(),plain.size())==1&&
+		MD5_Final((unsigned char*)temp_hash.data(),&ctx)==1)
+	{
+		hash=temp_hash;
+		return true;
+	}
+
+	return false;
+}
+
 bool hash_sha256(const std::string& plain,std::string& hash)
 {
 	std::string temp_hash;
@@ -211,6 +236,32 @@ bool hash_sha512(const std::string& plain,std::string& hash)
 	return false;
 }
 
+bool hmac_md5(std::string key,const std::string& plain,std::string& hash)
+{
+	if(key.size()>MD5_BLOCK_SIZE)
+	{
+		if(!hash_md5(key,key))
+			return false;
+	}
+
+	std::string o_key_pad(MD5_BLOCK_SIZE,0x5c);
+	std::string i_key_pad(MD5_BLOCK_SIZE,0x36);
+
+	for(size_t ii=0;ii<key.size();++ii)
+	{
+		o_key_pad[ii]^=key[ii];
+		i_key_pad[ii]^=key[ii];
+	}
+
+	std::string hash_temp="";
+
+	if(!hash_md5(i_key_pad+plain,hash_temp)||!hash_md5(o_key_pad+hash_temp,hash_temp))
+		return false;
+
+	hash=hash_temp;
+	return true;
+}
+
 bool hmac_sha256(std::string key,const std::string& plain,std::string& hash)
 {
 	if(key.size()>SHA256_BLOCK_SIZE)
@@ -230,10 +281,7 @@ bool hmac_sha256(std::string key,const std::string& plain,std::string& hash)
 
 	std::string hash_temp="";
 
-	if(!hash_sha256(i_key_pad+plain,hash_temp))
-		return false;
-
-	if(!hash_sha256(o_key_pad+hash_temp,hash_temp))
+	if(!hash_sha256(i_key_pad+plain,hash_temp)||!hash_sha256(o_key_pad+hash_temp,hash_temp))
 		return false;
 
 	hash=hash_temp;
@@ -259,10 +307,7 @@ bool hmac_sha512(std::string key,const std::string& plain,std::string& hash)
 
 	std::string hash_temp="";
 
-	if(!hash_sha512(i_key_pad+plain,hash_temp))
-		return false;
-
-	if(!hash_sha512(o_key_pad+hash_temp,hash_temp))
+	if(!hash_sha512(i_key_pad+plain,hash_temp)||!hash_sha512(o_key_pad+hash_temp,hash_temp))
 		return false;
 
 	hash=hash_temp;
