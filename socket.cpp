@@ -287,7 +287,8 @@ msl::socket::socket(const std::string& ip,const bool tcp,const size_t buffer_siz
 	if(device_m.broadcast)
 	{
 		device_m.ip_connect.sin_addr.s_addr=INADDR_ANY;
-		memset(device_m.ip_connect.sin_zero,'\0',4);
+		memset(device_m.ip_connect.sin_zero,'\0',sizeof(device_m.ip_connect.sin_zero));
+		memset(device_m.ip_bind.sin_zero,'\0',sizeof(device_m.ip_bind.sin_zero));
 	}
 	else
 	{
