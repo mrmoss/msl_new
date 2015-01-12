@@ -285,9 +285,14 @@ msl::socket::socket(const std::string& ip,const bool tcp,const size_t buffer_siz
 	device_m.ip_connect.sin_family=AF_INET;
 
 	if(device_m.broadcast)
-		memcpy(&device_m.ip_connect.sin_addr,ip_bind,4);
+	{
+		device_m.ip_connect.sin_addr.s_addr=INADDR_ANY;
+		memset(device_m.ip_connect.sin_zero,'\0',4);
+	}
 	else
+	{
 		memcpy(&device_m.ip_connect.sin_addr,ip_connect,4);
+	}
 
 	device_m.ip_connect.sin_port=htons(port_connect);
 
@@ -346,7 +351,7 @@ std::string msl::socket::address() const
 
 	for(int ii=0;ii<4;++ii)
 	{
-		address+=std::to_string(((char*)&device_m.ip_bind.sin_addr)[ii]);
+		address+=std::to_string(((unsigned char*)&device_m.ip_bind.sin_addr)[ii]);
 
 		if(ii!=3)
 			address+='.';
@@ -361,7 +366,7 @@ std::string msl::socket::address() const
 
 	for(int ii=0;ii<4;++ii)
 	{
-		address+=std::to_string(((char*)&device_m.ip_connect.sin_addr)[ii]);
+		address+=std::to_string(((unsigned char*)&device_m.ip_connect.sin_addr)[ii]);
 
 		if(ii!=3)
 			address+='.';
