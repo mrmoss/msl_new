@@ -284,9 +284,6 @@ msl::socket::socket(const std::string& ip,const bool tcp,const size_t buffer_siz
 	device_m.tcp=tcp;
 }
 
-msl::socket::socket(const msl::socket_device_t& device):device_m(device)
-{}
-
 void msl::socket::open()
 {
 	socket_open(device_m);
@@ -324,7 +321,9 @@ ssize_t msl::socket::write(const std::string& buf) const
 
 msl::socket msl::socket::accept() const
 {
-	return msl::socket(socket_accept(device_m));
+	msl::socket client("0.0.0.0:0>0.0.0.0:0",true);
+	client.device_m=socket_accept(device_m);
+	return client;
 }
 
 std::string msl::socket::address() const

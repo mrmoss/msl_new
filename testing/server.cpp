@@ -51,8 +51,8 @@ int main()
 
 			if(!ii->first.good())
 			{
+				std::cout<<"client disconnected\t"<<ii->first.address()<<std::endl;
 				ii=clients.erase(ii);
-				std::cout<<"client disconnected\t"<<client.address()<<std::endl;
 			}
 			else
 			{

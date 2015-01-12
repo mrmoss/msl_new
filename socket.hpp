@@ -36,7 +36,6 @@ namespace msl
 	{
 		public:
 			socket(const std::string& ip,const bool tcp,const size_t buffer_size=200);
-			socket(const socket_device_t& device);
 			virtual void open();
 			virtual void close();
 			virtual bool good() const;
