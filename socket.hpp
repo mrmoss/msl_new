@@ -30,13 +30,13 @@ namespace msl
 		bool host;
 		bool tcp;
 		size_t buffer_size;
-		bool broadcast;
 	};
 
 	class socket
 	{
 		public:
 			socket(const std::string& ip,const bool tcp,const size_t buffer_size=200);
+			socket(const socket_device_t& device);
 			virtual void open();
 			virtual void close();
 			virtual bool good() const;

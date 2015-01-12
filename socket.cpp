@@ -152,7 +152,7 @@ static void socket_close(msl::socket_device_t& device)
 	close(device.fd);
 	device.fd=INVALID_SOCKET_VALUE;
 }
-#include <iostream>
+
 static void socket_open(msl::socket_device_t& device)
 {
 	socket_init();
@@ -170,16 +170,15 @@ static void socket_open(msl::socket_device_t& device)
 		linger lingerer;
 		lingerer.l_onoff=1;
 		lingerer.l_linger=10;
-		int reuse_on=1;
-		int broadcast_on=1;
+		int on=1;
 
 		if(setsockopt(device.fd,SOL_SOCKET,SO_LINGER,(const char*)&lingerer,sizeof(lingerer))!=0)
 			socket_close(device);
-		if(setsockopt(device.fd,SOL_SOCKET,SO_REUSEADDR,(const char*)&reuse_on,sizeof(reuse_on))!=0)
+		if(setsockopt(device.fd,SOL_SOCKET,SO_REUSEADDR,(const char*)&on,sizeof(on))!=0)
 			socket_close(device);
 
 		if(!device.tcp&&setsockopt(device.fd,SOL_SOCKET,SO_RCVBUF,(const char*)&device.buffer_size,ip_length)!=0)
-			socket_close(device);
+				socket_close(device);
 		if(!device.tcp&&setsockopt(device.fd,SOL_SOCKET,SO_SNDBUF,(const char*)&device.buffer_size,ip_length)!=0)
 			socket_close(device);
 
@@ -193,17 +192,11 @@ static void socket_open(msl::socket_device_t& device)
 		}
 		else
 		{
-			if(device.broadcast&&setsockopt(device.fd,SOL_SOCKET,SO_BROADCAST,&broadcast_on,sizeof(broadcast_on))!=0)
-			{
-				std::cout<<"happened..."<<std::endl;
-				socket_close(device);
-			}
-
 			if(connect(device.fd,(sockaddr*)&device.ip_connect,sizeof(device.ip_connect))!=0)
 				socket_close(device);
 		}
 
-		if(!device.broadcast&&getsockname(device.fd,(sockaddr*)&device.ip_bind,&ip_length)!=0)
+		if(getsockname(device.fd,(sockaddr*)&device.ip_bind,&ip_length)!=0)
 			socket_close(device);
 	}
 }
@@ -253,7 +246,7 @@ static bool socket_valid(const msl::socket_device_t& device)
 static msl::socket_device_t socket_accept(const msl::socket_device_t& device)
 {
 	socket_init();
-	msl::socket_device_t client{INVALID_SOCKET_VALUE,{},device.ip_connect,false,device.tcp,device.buffer_size,false};
+	msl::socket_device_t client{INVALID_SOCKET_VALUE,{},device.ip_connect,false,device.tcp,device.buffer_size};
 
 	if(socket_available(device)>0)
 	{
@@ -283,26 +276,16 @@ msl::socket::socket(const std::string& ip,const bool tcp,const size_t buffer_siz
 	device_m.ip_bind.sin_port=htons(port_bind);
 
 	device_m.ip_connect.sin_family=AF_INET;
-
-	if(device_m.broadcast)
-	{
-		device_m.ip_connect.sin_addr.s_addr=INADDR_ANY;
-		memset(device_m.ip_connect.sin_zero,'\0',sizeof(device_m.ip_connect.sin_zero));
-		memset(device_m.ip_bind.sin_zero,'\0',sizeof(device_m.ip_bind.sin_zero));
-	}
-	else
-	{
-		memcpy(&device_m.ip_connect.sin_addr,ip_connect,4);
-	}
-
+	memcpy(&device_m.ip_connect.sin_addr,ip_connect,4);
 	device_m.ip_connect.sin_port=htons(port_connect);
 
 	device_m.buffer_size=buffer_size;
 	device_m.host=host;
 	device_m.tcp=tcp;
-
-	device_m.broadcast=(ip_connect[0]==255&&ip_connect[1]==255&&ip_connect[2]==255&&ip_connect[3]==255);
 }
+
+msl::socket::socket(const msl::socket_device_t& device):device_m(device)
+{}
 
 void msl::socket::open()
 {
@@ -341,9 +324,7 @@ ssize_t msl::socket::write(const std::string& buf) const
 
 msl::socket msl::socket::accept() const
 {
-	msl::socket client("0.0.0.0:0",true);
-	client.device_m=socket_accept(device_m);
-	return client;
+	return msl::socket(socket_accept(device_m));
 }
 
 std::string msl::socket::address() const
@@ -352,7 +333,7 @@ std::string msl::socket::address() const
 
 	for(int ii=0;ii<4;++ii)
 	{
-		address+=std::to_string(((unsigned char*)&device_m.ip_bind.sin_addr)[ii]);
+		address+=std::to_string(((char*)&device_m.ip_bind.sin_addr)[ii]);
 
 		if(ii!=3)
 			address+='.';
@@ -367,7 +348,7 @@ std::string msl::socket::address() const
 
 	for(int ii=0;ii<4;++ii)
 	{
-		address+=std::to_string(((unsigned char*)&device_m.ip_connect.sin_addr)[ii]);
+		address+=std::to_string(((char*)&device_m.ip_connect.sin_addr)[ii]);
 
 		if(ii!=3)
 			address+='.';
