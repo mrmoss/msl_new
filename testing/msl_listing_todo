@@ -5,7 +5,7 @@ msl
 		input
 			keyboard/mouse
 				read
-		sprite
+		sprites
 	-utility
 		json
 			from_string/to_string

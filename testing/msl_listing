@@ -12,7 +12,7 @@ msl
 		input
 			keyboard/mouse
 				read
-		sprite
+		sprites
 	-hardware
 		joystick
 			close/list/open/read
