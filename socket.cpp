@@ -255,6 +255,16 @@ static msl::socket_device_t socket_accept(const msl::socket_device_t& device)
 
 		if(socket_valid(client)&&getsockname(client.fd,(sockaddr*)&client.ip_connect,&ip_length)!=0)
 			socket_close(client);
+
+		linger lingerer;
+		lingerer.l_onoff=1;
+		lingerer.l_linger=10;
+		int on=1;
+
+		if(setsockopt(client.fd,SOL_SOCKET,SO_LINGER,(const char*)&lingerer,sizeof(lingerer))!=0)
+			socket_close(client);
+		if(setsockopt(client.fd,SOL_SOCKET,SO_REUSEADDR,(const char*)&on,sizeof(on))!=0)
+			socket_close(client);
 	}
 
 	return client;
