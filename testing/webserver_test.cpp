@@ -2,7 +2,7 @@
 #include "../time.hpp"
 #include "../webserver.hpp"
 
-bool client_func(mg_connection connection,enum mg_event event)
+bool client_func(const mg_connection& connection,enum mg_event event)
 {
 	if(event==MG_AUTH)
 		return true;
