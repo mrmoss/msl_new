@@ -26,5 +26,7 @@ int main()
 	while(test.good())
 		msl::delay_ms(1);
 
+	test.close();
+
 	return 0;
 }
