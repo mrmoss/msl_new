@@ -6,4 +6,4 @@
 #g++ crypto_test.cpp ../crypto.cpp ../string.cpp -o crypto_test -O -Wall -std=c++11 -lcrypto -ggdb #-lgdi32
 #g++ vec_test.cpp -o vec_test -O -Wall -std=c++11#g++ file_test.cpp ../file.cpp -o file_test -O -Wall -std=c++11
 #g++ file_test.cpp ../file.cpp -o file_test -O -Wall -std=c++11
-g++ webserver_test.cpp ../mongoose/mongoose.c ../time.cpp ../webserver.cpp -o webserver_test -O -Wall -std=c++11
+g++ webserver_test.cpp ../mongoose/mongoose.c ../time.cpp ../webserver.cpp -o webserver_test -O -Wall -std=c++11 -lpthread
