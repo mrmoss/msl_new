@@ -15,3 +15,7 @@ testing/file_test.exe
 testing/test.txt
 testing/webserver_test
 testing/webserver_test.exe
+testing/serial_test
+testing/serial_test.exe
+testing/joystick_test
+testing/joystick_test.exe

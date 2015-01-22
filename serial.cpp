@@ -82,7 +82,7 @@ static bool serial_valid(const msl::serial_device_t& device)
 	return valid;
 }
 
-std::vector<std::string> msl::serial::list()
+std::vector<std::string> msl::serial_t::list()
 {
 	std::vector<std::string> list;
 
@@ -246,7 +246,7 @@ static bool serial_valid(const msl::serial_device_t& device)
 	return tcgetattr(device.fd,&options)!=-1;
 }
 
-std::vector<std::string> msl::serial::list()
+std::vector<std::string> msl::serial_t::list()
 {
 	std::vector<std::string> list;
 	std::vector<std::string> files;
@@ -316,55 +316,63 @@ static ssize_t serial_write(const msl::serial_device_t& device,const void* buffe
 	return write(device.fd,(char*)buffer,size);
 }
 
-msl::serial::serial(const std::string& name,const size_t baud):device_m{INVALID_HANDLE_VALUE,name,baud}
+msl::serial_t::serial_t(const std::string& name,const size_t baud):device_m{INVALID_HANDLE_VALUE,name,baud}
 {}
 
-msl::serial::~serial()
+msl::serial_t::~serial_t()
 {
 	close();
 }
 
-void msl::serial::open()
+void msl::serial_t::open(const std::string& name,const size_t baud)
 {
+	close();
+	device_m={INVALID_HANDLE_VALUE,name,baud};
+	open();
+}
+
+void msl::serial_t::open()
+{
+	close();
 	device_m=serial_open(device_m.name,device_m.baud);
 }
 
-void msl::serial::close()
+void msl::serial_t::close()
 {
 	serial_close(device_m);
 }
 
-bool msl::serial::good() const
+bool msl::serial_t::good() const
 {
 	return serial_valid(device_m);
 }
 
-ssize_t msl::serial::available() const
+ssize_t msl::serial_t::available() const
 {
 	return serial_available(device_m);
 }
 
-ssize_t msl::serial::read(void* buf,const size_t count) const
+ssize_t msl::serial_t::read(void* buf,const size_t count) const
 {
 	return serial_read(device_m,buf,count);
 }
 
-ssize_t msl::serial::write(const void* buf,const size_t count) const
+ssize_t msl::serial_t::write(const void* buf,const size_t count) const
 {
 	return serial_write(device_m,buf,count);
 }
 
-ssize_t msl::serial::write(const std::string& buf) const
+ssize_t msl::serial_t::write(const std::string& buf) const
 {
 	return serial_write(device_m,buf.c_str(),buf.size());
 }
 
-std::string msl::serial::name() const
+std::string msl::serial_t::name() const
 {
 	return device_m.name;
 }
 
-size_t msl::serial::baud() const
+size_t msl::serial_t::baud() const
 {
 	return device_m.baud;
 }

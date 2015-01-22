@@ -26,13 +26,16 @@ namespace msl
 		size_t baud;
 	};
 
-	class serial
+	class serial_t
 	{
 		public:
 			static std::vector<std::string> list();
 
-			serial(const std::string& name,const size_t baud);
-			~serial();
+			serial_t(const std::string& name,const size_t baud);
+			serial_t(const serial_t& copy)=delete;
+			~serial_t();
+			serial_t& operator=(const serial_t& copy)=delete;
+			void open(const std::string& name,const size_t baud);
 			void open();
 			void close();
 			bool good() const;
