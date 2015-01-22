@@ -7,7 +7,7 @@
 
 int main()
 {
-	msl::tcp_socket c("0.0.0.0:0>0.0.0.0:8080");
+	msl::tcp_socket_t c("0.0.0.0:0>0.0.0.0:8080");
 	c.open();
 
 	if(!c.good())
