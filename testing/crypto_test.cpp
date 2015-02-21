@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <gmpxx.h>
 
 //RSA Keys
 std::string publickey="-----BEGIN PUBLIC KEY-----\n"\
@@ -51,7 +52,7 @@ std::string iv="01234567890123456";
 //HMAC Key
 std::string hmac_key="key";
 
-int main()
+int main(int argc,char* argv[])
 {
 	std::string plaintext="The quick brown fox jumps over the lazy dog";
 	std::string encryptedtext="";
@@ -60,12 +61,12 @@ int main()
 
 	//RSA Testing
 	std::cout<<"RSA"<<std::endl;
-	if(!encrypt_rsa(plaintext,publickey,encryptedtext))
+	if(!msl::encrypt_rsa(plaintext,publickey,encryptedtext))
 	{
 		std::cout<<"could not rsa encrypt data!"<<std::endl;
 		return 0;
 	}
-	if(!decrypt_rsa(encryptedtext,privatekey,decryptedtext))
+	if(!msl::decrypt_rsa(encryptedtext,privatekey,decryptedtext))
 	{
 		std::cout<<"could not rsa decrypt data!"<<std::endl;
 		return 0;
@@ -76,12 +77,12 @@ int main()
 
 	//AES Testing
 	std::cout<<"AES256"<<std::endl;
-	if(!encrypt_aes256(plaintext,key,iv,encryptedtext))
+	if(!msl::encrypt_aes256(plaintext,key,iv,encryptedtext))
 	{
 		std::cout<<"could not aes256 encrypt data!"<<std::endl;
 		return 0;
 	}
-	if(!decrypt_aes256(encryptedtext,key,iv,decryptedtext))
+	if(!msl::decrypt_aes256(encryptedtext,key,iv,decryptedtext))
 	{
 		std::cout<<"could not aes256 decrypt data!"<<std::endl;
 		return 0;
@@ -92,7 +93,7 @@ int main()
 
 	//Hash Testing
 	std::cout<<"MD5"<<std::endl;
-	if(!hash_md5(plaintext,hash))
+	if(!msl::hash_md5(plaintext,hash))
 	{
 		std::cout<<"could not md5 hash data!"<<std::endl;
 		return 0;
@@ -101,7 +102,7 @@ int main()
 	std::cout<<std::endl;
 
 	std::cout<<"SHA256"<<std::endl;
-	if(!hash_sha256(plaintext,hash))
+	if(!msl::hash_sha256(plaintext,hash))
 	{
 		std::cout<<"could not sha256 hash data!"<<std::endl;
 		return 0;
@@ -110,7 +111,7 @@ int main()
 	std::cout<<std::endl;
 
 	std::cout<<"SHA512"<<std::endl;
-	if(!hash_sha512(plaintext,hash))
+	if(!msl::hash_sha512(plaintext,hash))
 	{
 		std::cout<<"could not sha512 hash data!"<<std::endl;
 		return 0;
@@ -120,7 +121,7 @@ int main()
 
 	//HMAC Testing
 	std::cout<<"HMAC_MD5"<<std::endl;
-	if(!hmac_md5("key","The quick brown fox jumps over the lazy dog",hash))
+	if(!msl::hmac_md5("key","The quick brown fox jumps over the lazy dog",hash))
 	{
 		std::cout<<"could not hmac_md5 hash data!"<<std::endl;
 		return 0;
@@ -129,7 +130,7 @@ int main()
 	std::cout<<std::endl;
 
 	std::cout<<"HMAC_SHA256"<<std::endl;
-	if(!hmac_sha256("key","The quick brown fox jumps over the lazy dog",hash))
+	if(!msl::hmac_sha256("key","The quick brown fox jumps over the lazy dog",hash))
 	{
 		std::cout<<"could not hmac_sha256 hash data!"<<std::endl;
 		return 0;
@@ -138,7 +139,7 @@ int main()
 	std::cout<<std::endl;
 
 	std::cout<<"HMAC_SHA512"<<std::endl;
-	if(!hmac_sha512(hmac_key,plaintext,hash))
+	if(!msl::hmac_sha512(hmac_key,plaintext,hash))
 	{
 		std::cout<<"could not hmac_sha512 hash data!"<<std::endl;
 		return 0;
