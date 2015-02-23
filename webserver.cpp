@@ -5,20 +5,17 @@
 
 void msl::client_reply(mg_connection& client,const std::string& data,const std::string& mime)
 {
-	if(&client!=nullptr)
-	{
-		mg_printf
-		(
-			&client,
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Type: %s\r\n"
-			"Content-Length: %ld\r\n"
-			"\r\n"
-			"%s",
-			mime.c_str(),
-			data.size(),data.c_str()
-		);
-	}
+	mg_printf
+	(
+		&client,
+		"HTTP/1.1 200 OK\r\n"
+		"Content-Type: %s\r\n"
+		"Content-Length: %ld\r\n"
+		"\r\n"
+		"%s",
+		mime.c_str(),
+		data.size(),data.c_str()
+	);
 }
 
 msl::webserver_t::webserver_t(client_func_t client_func,const std::string& address,const std::string& webroot):
