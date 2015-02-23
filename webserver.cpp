@@ -3,11 +3,11 @@
 #include <chrono>
 #include <thread>
 
-void msl::client_reply(mg_connection& client,const std::string& data,const std::string& mime)
+void msl::client_reply(const mg_connection& client,const std::string& data,const std::string& mime)
 {
 	mg_printf
 	(
-		&client,
+		(mg_connection*)&client,
 		"HTTP/1.1 200 OK\r\n"
 		"Content-Type: %s\r\n"
 		"Content-Length: %ld\r\n"

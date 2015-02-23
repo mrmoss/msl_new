@@ -8,7 +8,7 @@
 
 namespace msl
 {
-	void client_reply(mg_connection& client,const std::string& data,const std::string& mime);
+	void client_reply(const mg_connection& client,const std::string& data,const std::string& mime);
 
 	class webserver_t
 	{
