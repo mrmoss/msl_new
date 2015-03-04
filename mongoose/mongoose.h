@@ -2,29 +2,23 @@
 // Copyright (c) 2013-2014 Cesanta Software Limited
 // All rights reserved
 //
-// This library is dual-licensed: you can redistribute it and/or modify
+// This software is dual-licensed: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License version 2 as
 // published by the Free Software Foundation. For the terms of this
 // license, see <http://www.gnu.org/licenses/>.
 //
-// You are free to use this library under the terms of the GNU General
+// You are free to use this software under the terms of the GNU General
 // Public License, but WITHOUT ANY WARRANTY; without even the implied
 // warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 // See the GNU General Public License for more details.
 //
-// Alternatively, you can license this library under a commercial
+// Alternatively, you can license this software under a commercial
 // license, as set out in <http://cesanta.com/>.
-//
-// $Date: 2014-09-09 17:07:55 UTC $
 
 #ifndef MONGOOSE_HEADER_INCLUDED
 #define  MONGOOSE_HEADER_INCLUDED
 
-/* Site config: why would you have CGI in a C++ program? */
-#define MONGOOSE_NO_CGI 1
-
-
-#define MONGOOSE_VERSION "5.4"
+#define MONGOOSE_VERSION "5.6"
 
 #include <stdio.h>      // required for FILE
 #include <stddef.h>     // required for size_t
@@ -57,7 +51,7 @@ struct mg_connection {
   int is_websocket;           // Connection is a websocket connection
   int status_code;            // HTTP status code for HTTP error handler
   int wsbits;                 // First byte of the websocket frame
-  void *server_param;         // Parameter passed to mg_add_uri_handler()
+  void *server_param;         // Parameter passed to mg_create_server()
   void *connection_param;     // Placeholder for connection-specific data
   void *callback_param;
 };
@@ -97,8 +91,7 @@ const char *mg_set_option(struct mg_server *, const char *opt, const char *val);
 int mg_poll_server(struct mg_server *, int milliseconds);
 const char **mg_get_valid_option_names(void);
 const char *mg_get_option(const struct mg_server *server, const char *name);
-void mg_set_listening_socket(struct mg_server *, int sock);
-int mg_get_listening_socket(struct mg_server *);
+void mg_copy_listeners(struct mg_server *from, struct mg_server *to);
 struct mg_connection *mg_next(struct mg_server *, struct mg_connection *);
 void mg_wakeup_server(struct mg_server *);
 void mg_wakeup_server_ex(struct mg_server *, mg_handler_t, const char *, ...);
@@ -117,7 +110,7 @@ size_t mg_websocket_write(struct mg_connection *, int opcode,
 size_t mg_websocket_printf(struct mg_connection* conn, int opcode,
                            const char *fmt, ...);
 
-void mg_send_file(struct mg_connection *, const char *path);
+void mg_send_file(struct mg_connection *, const char *path, const char *);
 void mg_send_file_data(struct mg_connection *, int fd);
 
 const char *mg_get_header(const struct mg_connection *, const char *name);

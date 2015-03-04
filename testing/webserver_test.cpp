@@ -15,7 +15,7 @@ bool client_func(const mg_connection& connection,enum mg_event event)
 
 int main()
 {
-	msl::webserver_t test(client_func,"0.0.0.0:8080","web");
+	msl::webserver_t test(client_func,"0.0.0.0:80","web");
 	test.open();
 
 	if(test.good())
