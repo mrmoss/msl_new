@@ -18,15 +18,17 @@ int main()
 	msl::webserver_t test(client_func,"0.0.0.0:80","web");
 	test.open();
 
-	if(test.good())
-		std::cout<<":)"<<std::endl;
-	else
-		std::cout<<":("<<std::endl;
+	try
+	{
+		test.open();
+	}
+	catch(std::exception& error)
+	{
+		std::cout<<error.what()<<std::endl;
+	}
 
-	while(test.good())
+	while(true)
 		msl::delay_ms(1);
-
-	test.close();
 
 	return 0;
 }
