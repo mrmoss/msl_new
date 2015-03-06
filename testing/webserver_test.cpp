@@ -15,23 +15,29 @@ bool client_func(const mg_connection& connection,enum mg_event event)
 
 int main()
 {
-	msl::webserver_t test(client_func,"0.0.0.0:80","web");
+	std::cout<<sizeof(msl::webserver_t::server_thread_t)<<std::endl;
 
-	test.open();
-
-	if(!test.good())
+	while(true)
 	{
-		std::cout<<":("<<std::endl;
-		return 0;
+		msl::webserver_t test(client_func,"0.0.0.0:8080","web");
+
+		test.open();
+
+		if(!test.good())
+		{
+			std::cout<<":("<<std::endl;
+			return 0;
+		}
+
+		std::cout<<":)"<<std::endl;
+
+		while(test.good())
+		{
+			test.close();
+		}
+
+		std::cout<<"T_T"<<std::endl;
 	}
-
-	std::cout<<":)"<<std::endl;
-
-	while(test.good())
-	{
-	}
-
-	std::cout<<"T_T"<<std::endl;
 
 	return 0;
 }
