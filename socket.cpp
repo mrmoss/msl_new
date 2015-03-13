@@ -332,7 +332,7 @@ std::string msl::socket_t::address() const
 
 	for(int ii=0;ii<4;++ii)
 	{
-		address+=std::to_string(((char*)&device_m.ip_bind.sin_addr)[ii]);
+		address+=std::to_string((unsigned int)((unsigned char*)(&device_m.ip_bind.sin_addr))[ii]);
 
 		if(ii!=3)
 			address+='.';
@@ -347,7 +347,7 @@ std::string msl::socket_t::address() const
 
 	for(int ii=0;ii<4;++ii)
 	{
-		address+=std::to_string(((char*)&device_m.ip_connect.sin_addr)[ii]);
+		address+=std::to_string((unsigned int)((unsigned char*)(&device_m.ip_connect.sin_addr))[ii]);
 
 		if(ii!=3)
 			address+='.';
