@@ -15,8 +15,6 @@
 #include <cstdint>
 #include <mutex>
 
-#include <iostream>
-
 #define RSA_PKCS1_PADDING_SIZE			11
 #define RSA_PKCS1_OAEP_PADDING_SIZE		41
 
@@ -177,15 +175,10 @@ bool msl::decrypt_aes256(const std::string& cipher,const std::string& key,
 	int temp_length;
 	int temp_unaligned_length;
 
-	bool test0=ctx!=nullptr;
-	bool test1=EVP_DecryptInit(ctx,EVP_aes_256_cbc(),(uint8_t*)key.c_str(),(uint8_t*)iv.c_str())!=0;
-	bool test2=EVP_DecryptUpdate(ctx,temp_data,&temp_length,(uint8_t*)cipher.c_str(),cipher.size())!=0;
-	int output3=EVP_DecryptFinal(ctx,temp_data+temp_length,&temp_unaligned_length);
-	bool test3=output3!=0;
-
-	std::cout<<"testing "<<test0<<" "<<test1<<" "<<test2<<" "<<output3<<std::endl;
-
-	if(test0&&test1&&test2&&test3)
+	if(ctx!=nullptr&&
+		EVP_DecryptInit(ctx,EVP_aes_256_cbc(),(uint8_t*)key.c_str(),(uint8_t*)iv.c_str())!=0&&
+		EVP_DecryptUpdate(ctx,temp_data,&temp_length,(uint8_t*)cipher.c_str(),cipher.size())!=0&&
+		EVP_DecryptFinal(ctx,temp_data+temp_length,&temp_unaligned_length)!=0)
 	{
 		plain=std::string((char*)temp_data,temp_length+temp_unaligned_length);
 		success=true;
