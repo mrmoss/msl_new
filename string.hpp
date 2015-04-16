@@ -9,6 +9,7 @@ namespace msl
 	std::string to_upper(std::string str);
 
 	std::string to_hex_string(const std::string& str);
+	std::string from_hex_string(std::string str);
 
 	std::string replace_all(std::string str,const std::string& find,const std::string& replace);
 

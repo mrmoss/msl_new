@@ -15,6 +15,8 @@
 #include <cstdint>
 #include <mutex>
 
+#include <iostream>
+
 #define RSA_PKCS1_PADDING_SIZE			11
 #define RSA_PKCS1_OAEP_PADDING_SIZE		41
 
@@ -22,9 +24,12 @@
 #define SHA256_BLOCK_SIZE				64
 #define SHA512_BLOCK_SIZE				128
 
+#define AES_BLOCK_SIZE					16
+#define AES256_KEY_SIZE					32
+
 static std::mutex ossl_lock;
 
-bool msl::encrypt_rsa(const void* plain,const size_t size,const std::string& key,std::string& cipher)
+bool msl::encrypt_rsa(const std::string& plain,const std::string& key,std::string& cipher)
 {
 	bool success=true;
 	ossl_lock.lock();
@@ -44,14 +49,15 @@ bool msl::encrypt_rsa(const void* plain,const size_t size,const std::string& key
 	if(rsa==nullptr)
 		success=false;
 
-	if(size>(size_t)RSA_size(rsa)-RSA_PKCS1_OAEP_PADDING_SIZE)
+	if(plain.size()>(size_t)RSA_size(rsa)-RSA_PKCS1_OAEP_PADDING_SIZE)
 		success=false;
 
 	size_t temp_size=(size_t)-1;
 	uint8_t* temp_data=new uint8_t[RSA_size(rsa)];
 
 	if(success)
-		temp_size=RSA_public_encrypt(size,(uint8_t*)plain,temp_data,rsa,RSA_PKCS1_OAEP_PADDING);
+		temp_size=RSA_public_encrypt(plain.size(),(uint8_t*)plain.c_str(),
+			temp_data,rsa,RSA_PKCS1_OAEP_PADDING);
 
 	if(success&&temp_size==(size_t)~0)
 		success=false;
@@ -71,50 +77,7 @@ bool msl::encrypt_rsa(const void* plain,const size_t size,const std::string& key
 	return success;
 }
 
-bool msl::encrypt_rsa(const std::string& plain,const std::string& key,std::string& cipher)
-{
-	return msl::encrypt_rsa(plain.c_str(),plain.size(),key,cipher);
-}
-
-bool msl::encrypt_aes256(const void* plain,const size_t size,const std::string& key,const std::string& iv,std::string& cipher)
-{
-	bool success=false;
-	ossl_lock.lock();
-	ERR_load_crypto_strings();
-	OpenSSL_add_all_algorithms();
-	EVP_CIPHER_CTX* ctx=EVP_CIPHER_CTX_new();
-	uint8_t* temp_data=new uint8_t[(size/16+1)*16];
-	ossl_lock.unlock();
-
-	int temp_length;
-	int temp_unaligned_length;
-
-	if(ctx!=nullptr&&EVP_CIPHER_CTX_set_padding(ctx,1)!=0&&
-		EVP_EncryptInit_ex(ctx,EVP_aes_256_cbc(),nullptr,(uint8_t*)key.c_str(),(uint8_t*)iv.c_str())!=0&&
-		EVP_EncryptUpdate(ctx,temp_data,&temp_length,(uint8_t*)plain,size)!=0&&
-		EVP_EncryptFinal_ex(ctx,temp_data+temp_length,&temp_unaligned_length)!=0)
-	{
-		cipher=std::string((char*)temp_data,temp_length+temp_unaligned_length);
-		success=true;
-	}
-
-	delete[] temp_data;
-	ossl_lock.lock();
-	EVP_CIPHER_CTX_free(ctx);
-	ERR_free_strings();
-	EVP_cleanup();
-	ERR_remove_state(0);
-	CRYPTO_cleanup_all_ex_data();
-	ossl_lock.unlock();
-	return success;
-}
-
-bool msl::encrypt_aes256(const std::string& plain,const std::string& key,const std::string& iv,std::string& cipher)
-{
-	return encrypt_aes256(plain.c_str(),plain.size(),key,iv,cipher);
-}
-
-bool msl::decrypt_rsa(const void* cipher,const size_t size,const std::string& key,std::string& plain)
+bool msl::decrypt_rsa(const std::string& cipher,const std::string& key,std::string& plain)
 {
 	bool success=true;
 	ossl_lock.lock();
@@ -134,14 +97,15 @@ bool msl::decrypt_rsa(const void* cipher,const size_t size,const std::string& ke
 	if(rsa==nullptr)
 		success=false;
 
-	if(size>(size_t)RSA_size(rsa))
+	if(cipher.size()>(size_t)RSA_size(rsa))
 		success=false;
 
 	size_t temp_size=(size_t)-1;
 	uint8_t* temp_data=new uint8_t[RSA_size(rsa)];
 
 	if(success)
-		temp_size=RSA_private_decrypt(size,(uint8_t*)cipher,temp_data,rsa,RSA_PKCS1_OAEP_PADDING);
+		temp_size=RSA_private_decrypt(cipher.size(),(uint8_t*)cipher.c_str(),
+			temp_data,rsa,RSA_PKCS1_OAEP_PADDING);
 
 	if(temp_size==(size_t)~0)
 		success=false;
@@ -156,32 +120,72 @@ bool msl::decrypt_rsa(const void* cipher,const size_t size,const std::string& ke
 	ERR_free_strings();
 	EVP_cleanup();
 	ERR_remove_state(0);
-	CRYPTO_cleanup_all_ex_data();
 	ossl_lock.unlock();
 	return success;
 }
 
-bool msl::decrypt_rsa(const std::string& cipher,const std::string& key,std::string& plain)
+bool msl::encrypt_aes256(const std::string& plain,const std::string& key,
+	const std::string& iv,std::string& cipher)
 {
-	return msl::decrypt_rsa(cipher.c_str(),cipher.size(),key,plain);
+	bool success=true;
+	ossl_lock.lock();
+	ERR_load_crypto_strings();
+	OpenSSL_add_all_algorithms();
+	EVP_CIPHER_CTX* ctx=EVP_CIPHER_CTX_new();
+	uint8_t* temp_data=new uint8_t[(plain.size()/AES_BLOCK_SIZE+1)*AES_BLOCK_SIZE];
+	ossl_lock.unlock();
+
+	if(key.size()!=AES256_KEY_SIZE)
+		success=false;
+
+	if(success)
+	{
+		success=false;
+		int temp_length;
+		int temp_unaligned_length;
+
+		if(ctx!=nullptr&&EVP_CIPHER_CTX_set_padding(ctx,1)!=0&&
+			EVP_EncryptInit(ctx,EVP_aes_256_cbc(),(uint8_t*)key.c_str(),(uint8_t*)iv.c_str())!=0&&
+			EVP_EncryptUpdate(ctx,temp_data,&temp_length,(uint8_t*)plain.c_str(),plain.size())!=0&&
+			EVP_EncryptFinal(ctx,temp_data+temp_length,&temp_unaligned_length)!=0)
+		{
+			cipher=std::string((char*)temp_data,temp_length+temp_unaligned_length);
+			success=true;
+		}
+	}
+
+	delete[] temp_data;
+	ossl_lock.lock();
+	EVP_CIPHER_CTX_free(ctx);
+	ERR_free_strings();
+	EVP_cleanup();
+	ERR_remove_state(0);
+	ossl_lock.unlock();
+	return success;
 }
 
-bool msl::decrypt_aes256(const void* cipher,const size_t size,const std::string& key,const std::string& iv,std::string& plain)
+bool msl::decrypt_aes256(const std::string& cipher,const std::string& key,
+	const std::string& iv,std::string& plain)
 {
 	bool success=false;
 	ossl_lock.lock();
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_algorithms();
 	EVP_CIPHER_CTX* ctx=EVP_CIPHER_CTX_new();
-	uint8_t* temp_data=new uint8_t[(size/16+1)*16];
+	uint8_t* temp_data=new uint8_t[(cipher.size()/AES_BLOCK_SIZE+1)*AES_BLOCK_SIZE];
 
 	int temp_length;
 	int temp_unaligned_length;
 
-	if(ctx!=nullptr&&
-		EVP_DecryptInit_ex(ctx,EVP_aes_256_cbc(),nullptr,(uint8_t*)key.c_str(),(uint8_t*)iv.c_str())!=0&&
-		EVP_DecryptUpdate(ctx,temp_data,&temp_length,(uint8_t*)cipher,size)!=0&&
-		EVP_DecryptFinal_ex(ctx,temp_data+temp_length,&temp_unaligned_length)!=0)
+	bool test0=ctx!=nullptr;
+	bool test1=EVP_DecryptInit(ctx,EVP_aes_256_cbc(),(uint8_t*)key.c_str(),(uint8_t*)iv.c_str())!=0;
+	bool test2=EVP_DecryptUpdate(ctx,temp_data,&temp_length,(uint8_t*)cipher.c_str(),cipher.size())!=0;
+	int output3=EVP_DecryptFinal(ctx,temp_data+temp_length,&temp_unaligned_length);
+	bool test3=output3!=0;
+
+	std::cout<<"testing "<<test0<<" "<<test1<<" "<<test2<<" "<<output3<<std::endl;
+
+	if(test0&&test1&&test2&&test3)
 	{
 		plain=std::string((char*)temp_data,temp_length+temp_unaligned_length);
 		success=true;
@@ -192,14 +196,8 @@ bool msl::decrypt_aes256(const void* cipher,const size_t size,const std::string&
 	ERR_free_strings();
 	EVP_cleanup();
 	ERR_remove_state(0);
-	CRYPTO_cleanup_all_ex_data();
 	ossl_lock.unlock();
 	return success;
-}
-
-bool msl::decrypt_aes256(const std::string& cipher,const std::string& key,const std::string& iv,std::string& plain)
-{
-	return msl::decrypt_aes256(cipher.c_str(),cipher.size(),key,iv,plain);
 }
 
 bool msl::hash_md5(const std::string& plain,std::string& hash)
