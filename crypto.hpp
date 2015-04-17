@@ -11,21 +11,24 @@
 
 namespace msl
 {
-	bool encrypt_rsa(const std::string& plain,const std::string& key,std::string& cipher);
-	bool decrypt_rsa(const std::string& cipher,const std::string& key,std::string& plain);
+	std::string encrypt_rsa(const std::string& plain,const std::string& key);
+	std::string decrypt_rsa(const std::string& cipher,const std::string& key);
 
-	bool encrypt_aes256(const std::string& plain,const std::string& key,
-		const std::string& iv,std::string& cipher);
-	bool decrypt_aes256(const std::string& cipher,const std::string& key,
-		const std::string& iv,std::string& plain);
+	std::string encrypt_aes256(const std::string& plain,const std::string& key,const std::string& iv);
+	std::string decrypt_aes256(const std::string& cipher,const std::string& key,const std::string& iv);
 
-	bool hash_md5(const std::string& plain,std::string& hash);
-	bool hash_sha256(const std::string& plain,std::string& hash);
-	bool hash_sha512(const std::string& plain,std::string& hash);
+	std::string hash_md5(const std::string& plain);
+	std::string hash_sha160(const std::string& plain);
+	std::string hash_sha256(const std::string& plain);
+	std::string hash_sha512(const std::string& plain);
 
-	bool hmac_md5(std::string key,const std::string& plain,std::string& hash);
-	bool hmac_sha256(std::string key,const std::string& plain,std::string& hash);
-	bool hmac_sha512(std::string key,const std::string& plain,std::string& hash);
+	std::string hmac_md5(std::string key,const std::string& plain);
+	std::string hmac_sha160(std::string key,const std::string& plain);
+	std::string hmac_sha256(std::string key,const std::string& plain);
+	std::string hmac_sha512(std::string key,const std::string& plain);
+
+	std::string pbkdf2(const std::string& password,const std::string& salt,
+		const size_t key_byte_size,const size_t iterations);
 }
 
 #endif

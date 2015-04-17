@@ -61,89 +61,59 @@ int main(int argc,char* argv[])
 
 	//RSA Testing
 	std::cout<<"RSA"<<std::endl;
-	if(!msl::encrypt_rsa(plaintext,publickey,encryptedtext))
-	{
-		std::cout<<"could not rsa encrypt data!"<<std::endl;
-		return 0;
-	}
-	if(!msl::decrypt_rsa(encryptedtext,privatekey,decryptedtext))
-	{
-		std::cout<<"could not rsa decrypt data!"<<std::endl;
-		return 0;
-	}
+	encryptedtext=msl::encrypt_rsa(plaintext,publickey);
+	decryptedtext=msl::decrypt_rsa(encryptedtext,privatekey);
 	std::cout<<msl::to_hex_string(encryptedtext)<<std::endl;
 	std::cout<<decryptedtext<<std::endl;
 	std::cout<<std::endl;
 
 	//AES Testing
 	std::cout<<"AES256"<<std::endl;
-	if(!msl::encrypt_aes256(plaintext,key,iv,encryptedtext))
-	{
-		std::cout<<"could not aes256 encrypt data!"<<std::endl;
-		return 0;
-	}
-	if(!msl::decrypt_aes256(encryptedtext,key,iv,decryptedtext))
-	{
-		std::cout<<"could not aes256 decrypt data!"<<std::endl;
-		return 0;
-	}
+	encryptedtext=msl::encrypt_aes256(plaintext,key,iv);
+	decryptedtext=msl::decrypt_aes256(encryptedtext,key,iv);
 	std::cout<<msl::to_hex_string(encryptedtext)<<std::endl;
 	std::cout<<decryptedtext<<std::endl;
 	std::cout<<std::endl;
 
 	//Hash Testing
 	std::cout<<"MD5"<<std::endl;
-	if(!msl::hash_md5(plaintext,hash))
-	{
-		std::cout<<"could not md5 hash data!"<<std::endl;
-		return 0;
-	}
+	hash=msl::hash_md5(plaintext);
+	std::cout<<msl::to_hex_string(hash)<<std::endl;
+	std::cout<<std::endl;
+
+	std::cout<<"SHA160"<<std::endl;
+	hash=msl::hash_sha160(plaintext);
 	std::cout<<msl::to_hex_string(hash)<<std::endl;
 	std::cout<<std::endl;
 
 	std::cout<<"SHA256"<<std::endl;
-	if(!msl::hash_sha256(plaintext,hash))
-	{
-		std::cout<<"could not sha256 hash data!"<<std::endl;
-		return 0;
-	}
+	hash=msl::hash_sha256(plaintext);
 	std::cout<<msl::to_hex_string(hash)<<std::endl;
 	std::cout<<std::endl;
 
 	std::cout<<"SHA512"<<std::endl;
-	if(!msl::hash_sha512(plaintext,hash))
-	{
-		std::cout<<"could not sha512 hash data!"<<std::endl;
-		return 0;
-	}
+	hash=msl::hash_sha512(plaintext);
 	std::cout<<msl::to_hex_string(hash)<<std::endl;
 	std::cout<<std::endl;
 
 	//HMAC Testing
 	std::cout<<"HMAC_MD5"<<std::endl;
-	if(!msl::hmac_md5("key","The quick brown fox jumps over the lazy dog",hash))
-	{
-		std::cout<<"could not hmac_md5 hash data!"<<std::endl;
-		return 0;
-	}
+	hash=msl::hmac_md5(hmac_key,plaintext);
+	std::cout<<msl::to_hex_string(hash)<<std::endl;
+	std::cout<<std::endl;
+
+	std::cout<<"HMAC_SHA160"<<std::endl;
+	hash=msl::hmac_sha160(hmac_key,plaintext);
 	std::cout<<msl::to_hex_string(hash)<<std::endl;
 	std::cout<<std::endl;
 
 	std::cout<<"HMAC_SHA256"<<std::endl;
-	if(!msl::hmac_sha256("key","The quick brown fox jumps over the lazy dog",hash))
-	{
-		std::cout<<"could not hmac_sha256 hash data!"<<std::endl;
-		return 0;
-	}
+	hash=msl::hmac_sha256(hmac_key,plaintext);
 	std::cout<<msl::to_hex_string(hash)<<std::endl;
 	std::cout<<std::endl;
 
 	std::cout<<"HMAC_SHA512"<<std::endl;
-	if(!msl::hmac_sha512(hmac_key,plaintext,hash))
-	{
-		std::cout<<"could not hmac_sha512 hash data!"<<std::endl;
-		return 0;
-	}
+	hash=msl::hmac_sha512(hmac_key,plaintext);
 	std::cout<<msl::to_hex_string(hash)<<std::endl;
 	std::cout<<std::endl;
 
