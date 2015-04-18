@@ -7,10 +7,29 @@
 #ifndef MSL_C11_CRYPTO_HPP
 #define MSL_C11_CRYPTO_HPP
 
+#include <stdexcept>
 #include <string>
 
 namespace msl
 {
+	class encryption_error:public std::runtime_error
+	{
+		public:
+			encryption_error(const std::string& str);
+	};
+
+	class decryption_error:public std::runtime_error
+	{
+		public:
+			decryption_error(const std::string& str);
+	};
+
+	class hash_error:public std::runtime_error
+	{
+		public:
+			hash_error(const std::string& str);
+	};
+
 	std::string encrypt_rsa(const std::string& plain,const std::string& key);
 	std::string decrypt_rsa(const std::string& cipher,const std::string& key);
 

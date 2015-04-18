@@ -50,6 +50,15 @@ static void aes_cleanup(EVP_CIPHER_CTX* ctx)
 	ossl_lock.unlock();
 }
 
+msl::encryption_error::encryption_error(const std::string& str):std::runtime_error(str)
+{}
+
+msl::decryption_error::decryption_error(const std::string& str):std::runtime_error(str)
+{}
+
+msl::hash_error::hash_error(const std::string& str):std::runtime_error(str)
+{}
+
 std::string msl::encrypt_rsa(const std::string& plain,const std::string& key)
 {
 	std::string cipher;
@@ -75,15 +84,16 @@ std::string msl::encrypt_rsa(const std::string& plain,const std::string& key)
 	try
 	{
 		if(keybio==nullptr)
-			throw std::runtime_error("");
+			throw msl::encryption_error("msl::encrypt_rsa() - BIO_new_mem_buf failed.");
 
 		rsa=PEM_read_bio_RSA_PUBKEY(keybio,&rsa,nullptr,nullptr);
 
 		if(rsa==nullptr)
-			throw std::runtime_error("");
+			throw msl::encryption_error("msl::encrypt_rsa() - PEM_read_bio_RSA_PUBKEY failed.");
 
 		if(plain.size()>(size_t)RSA_size(rsa)-RSA_PKCS1_OAEP_PADDING_SIZE)
-			throw std::runtime_error("");
+			throw msl::encryption_error("msl::encrypt_rsa() - Invalid plain text size ("+
+				std::to_string((size_t)RSA_size(rsa)-RSA_PKCS1_OAEP_PADDING_SIZE)+" max).");
 
 		cipher.resize(RSA_size(rsa));
 
@@ -91,7 +101,7 @@ std::string msl::encrypt_rsa(const std::string& plain,const std::string& key)
 			(uint8_t*)cipher.data(),rsa,RSA_PKCS1_OAEP_PADDING);
 
 		if(temp_length==(size_t)~0)
-			throw std::runtime_error("");
+			throw msl::encryption_error("msl::encrypt_rsa() - RSA_public_encrypt failed.");
 
 		cipher.resize(temp_length);
 	}
@@ -130,15 +140,16 @@ std::string msl::decrypt_rsa(const std::string& cipher,const std::string& key)
 	try
 	{
 		if(keybio==nullptr)
-			throw std::runtime_error("");
+			throw msl::decryption_error("msl::decrypt_rsa() - BIO_new_mem_buf failed.");
 
 		rsa=PEM_read_bio_RSAPrivateKey(keybio,&rsa,nullptr,nullptr);
 
 		if(rsa==nullptr)
-			throw std::runtime_error("");
+			throw msl::decryption_error("msl::decrypt_rsa() - PEM_read_bio_RSAPrivateKey failed.");
 
 		if(cipher.size()>(size_t)RSA_size(rsa))
-			throw std::runtime_error("");
+			throw msl::decryption_error("msl::decrypt_rsa() - Invalid cipher text size ("+
+				std::to_string((size_t)RSA_size(rsa))+" max).");
 
 		plain.resize(RSA_size(rsa));
 
@@ -146,7 +157,7 @@ std::string msl::decrypt_rsa(const std::string& cipher,const std::string& key)
 			(uint8_t*)plain.data(),rsa,RSA_PKCS1_OAEP_PADDING);
 
 		if(temp_length==(size_t)~0)
-			throw std::runtime_error("");
+			throw msl::decryption_error("msl::decrypt_rsa() - RSA_private_decrypt failed.");
 
 		plain.resize(temp_length);
 	}
@@ -185,25 +196,26 @@ std::string msl::encrypt_aes256(const std::string& plain,const std::string& key,
 	try
 	{
 		if(key.size()!=AES256_KEY_SIZE)
-			throw std::runtime_error("");
+			throw msl::encryption_error("msl::encrypt_aes256() - Given key size is invalid ("+
+				std::to_string(AES256_KEY_SIZE)+"bytes ).");
 
 		int temp_length;
 		int temp_unaligned_length;
 
 		if(ctx==nullptr)
-			throw std::runtime_error("msl::encrypt_aes256() - Creating a EVP_CIPHER_CTX failed.");
+			throw msl::encryption_error("msl::encrypt_aes256() - Creating a EVP_CIPHER_CTX failed.");
 
 		if(EVP_CIPHER_CTX_set_padding(ctx,1)==0)
-			throw std::runtime_error("msl::encrypt_aes256() - EVP_CIPHER_CTX_set_padding failed.");
+			throw msl::encryption_error("msl::encrypt_aes256() - EVP_CIPHER_CTX_set_padding failed.");
 
 		if(EVP_EncryptInit(ctx,EVP_aes_256_cbc(),(uint8_t*)key.data(),(uint8_t*)iv.data())==0)
-			throw std::runtime_error("msl::encrypt_aes256() - EVP_EncryptInit failed.");
+			throw msl::encryption_error("msl::encrypt_aes256() - EVP_EncryptInit failed.");
 
 		if(EVP_EncryptUpdate(ctx,(uint8_t*)cipher.data(),&temp_length,(uint8_t*)plain.data(),plain.size())==0)
-			throw std::runtime_error("msl::encrypt_aes256() - EVP_EncryptUpdate failed.");
+			throw msl::encryption_error("msl::encrypt_aes256() - EVP_EncryptUpdate failed.");
 
 		if(EVP_EncryptFinal(ctx,(uint8_t*)cipher.data()+temp_length,&temp_unaligned_length)==0)
-			throw std::runtime_error("msl::encrypt_aes256() - EVP_EncryptFinal failed.");
+			throw msl::encryption_error("msl::encrypt_aes256() - EVP_EncryptFinal failed.");
 
 
 		cipher.resize(temp_length+temp_unaligned_length);
@@ -243,25 +255,26 @@ std::string msl::decrypt_aes256(const std::string& cipher,const std::string& key
 	try
 	{
 		if(key.size()!=AES256_KEY_SIZE)
-			throw std::runtime_error("");
+			throw msl::decryption_error("msl::decrypt_aes256() - Given key size is invalid ("+
+				std::to_string(AES256_KEY_SIZE)+"bytes ).");
 
 		int temp_length;
 		int temp_unaligned_length;
 
 		if(ctx==nullptr)
-			throw std::runtime_error("msl::decrypt_aes256() - Creating a EVP_CIPHER_CTX failed.");
+			throw msl::decryption_error("msl::decrypt_aes256() - Creating a EVP_CIPHER_CTX failed.");
 
 		if(EVP_CIPHER_CTX_set_padding(ctx,1)==0)
-			throw std::runtime_error("msl::edecrypt_aes256() - EVP_CIPHER_CTX_set_padding failed.");
+			throw msl::decryption_error("msl::edecrypt_aes256() - EVP_CIPHER_CTX_set_padding failed.");
 
 		if(EVP_DecryptInit(ctx,EVP_aes_256_cbc(),(uint8_t*)key.data(),(uint8_t*)iv.data())==0)
-			throw std::runtime_error("msl::encrypt_aes256() - EVP_DecryptInit failed.");
+			throw msl::decryption_error("msl::encrypt_aes256() - EVP_DecryptInit failed.");
 
 		if(EVP_DecryptUpdate(ctx,(uint8_t*)plain.data(),&temp_length,(uint8_t*)cipher.data(),cipher.size())==0)
-			throw std::runtime_error("msl::decrypt_aes256() - EVP_DecryptUpdate failed.");
+			throw msl::decryption_error("msl::decrypt_aes256() - EVP_DecryptUpdate failed.");
 
 		if(EVP_DecryptFinal(ctx,(uint8_t*)plain.data()+temp_length,&temp_unaligned_length)==0)
-			throw std::runtime_error("msl::decrypt_aes256() - EVP_DecryptFinal failed.");
+			throw msl::decryption_error("msl::decrypt_aes256() - EVP_DecryptFinal failed.");
 
 
 		plain.resize(temp_length+temp_unaligned_length);
@@ -281,16 +294,16 @@ std::string msl::hash_md5(const std::string& plain)
 	MD5_CTX ctx;
 
 	if(MD5_Init(&ctx)!=1)
-		throw std::runtime_error("msl::hash_md5 - MD5_Init failed.");
+		throw msl::hash_error("msl::hash_md5 - MD5_Init failed.");
 
 	if(MD5_Update(&ctx,(unsigned char*)plain.data(),plain.size())!=1)
-		throw std::runtime_error("msl::hash_md5 - MD5_Update failed.");
+		throw msl::hash_error("msl::hash_md5 - MD5_Update failed.");
 
 	std::string hash;
 	hash.resize(MD5_DIGEST_LENGTH);
 
 	if(MD5_Final((unsigned char*)hash.data(),&ctx)!=1)
-		throw std::runtime_error("msl::hash_md5 - MD5_Final failed.");
+		throw msl::hash_error("msl::hash_md5 - MD5_Final failed.");
 
 	return hash;
 }
@@ -300,16 +313,16 @@ std::string msl::hash_sha160(const std::string& plain)
 	SHA_CTX ctx;
 
 	if(SHA1_Init(&ctx)!=1)
-		throw std::runtime_error("msl::hash_sha160 - SHA1_Init failed.");
+		throw msl::hash_error("msl::hash_sha160 - SHA1_Init failed.");
 
 	if(SHA1_Update(&ctx,(unsigned char*)plain.data(),plain.size())!=1)
-		throw std::runtime_error("msl::hash_sha160 - SHA1_Update failed.");
+		throw msl::hash_error("msl::hash_sha160 - SHA1_Update failed.");
 
 	std::string hash;
 	hash.resize(SHA_DIGEST_LENGTH);
 
 	if(SHA1_Final((unsigned char*)hash.data(),&ctx)!=1)
-		throw std::runtime_error("msl::hash_sha160 - SHA1_Final failed.");
+		throw msl::hash_error("msl::hash_sha160 - SHA1_Final failed.");
 
 	return hash;
 }
@@ -319,16 +332,16 @@ std::string msl::hash_sha256(const std::string& plain)
 	SHA256_CTX ctx;
 
 	if(SHA256_Init(&ctx)!=1)
-		throw std::runtime_error("msl::hash_sha256 - SHA256_Init failed.");
+		throw msl::hash_error("msl::hash_sha256 - SHA256_Init failed.");
 
 	if(SHA256_Update(&ctx,(unsigned char*)plain.data(),plain.size())!=1)
-		throw std::runtime_error("msl::hash_sha256 - SHA256_Update failed.");
+		throw msl::hash_error("msl::hash_sha256 - SHA256_Update failed.");
 
 	std::string hash;
 	hash.resize(SHA256_DIGEST_LENGTH);
 
 	if(SHA256_Final((unsigned char*)hash.data(),&ctx)!=1)
-		throw std::runtime_error("msl::hash_sha256 - SHA256_Final failed.");
+		throw msl::hash_error("msl::hash_sha256 - SHA256_Final failed.");
 
 	return hash;
 }
@@ -338,16 +351,16 @@ std::string msl::hash_sha512(const std::string& plain)
 	SHA512_CTX ctx;
 
 	if(SHA512_Init(&ctx)!=1)
-		throw std::runtime_error("msl::hash_sha512 - SHA512_Init failed.");
+		throw msl::hash_error("msl::hash_sha512 - SHA512_Init failed.");
 
 	if(SHA512_Update(&ctx,(unsigned char*)plain.data(),plain.size())!=1)
-		throw std::runtime_error("msl::hash_sha512 - SHA512_Update failed.");
+		throw msl::hash_error("msl::hash_sha512 - SHA512_Update failed.");
 
 	std::string hash;
 	hash.resize(SHA512_DIGEST_LENGTH);
 
 	if(SHA512_Final((unsigned char*)hash.data(),&ctx)!=1)
-		throw std::runtime_error("msl::hash_sha512 - SHA512_Final failed.");
+		throw msl::hash_error("msl::hash_sha512 - SHA512_Final failed.");
 
 	return hash;
 }
@@ -432,7 +445,7 @@ std::string msl::pbkdf2(const std::string& password,const std::string& salt,cons
 
 	if(PKCS5_PBKDF2_HMAC_SHA1(password.data(),password.size(),
 		(uint8_t*)salt.data(),salt.size(),iterations,key_byte_size,(uint8_t*)key.data())==0)
-		throw std::runtime_error("msl::pbkdf2() - PKCS5_PBKDF2_HMAC_SHA1 failed.");
+		throw msl::hash_error("msl::pbkdf2() - PKCS5_PBKDF2_HMAC_SHA1 failed.");
 
 	return key;
 }
