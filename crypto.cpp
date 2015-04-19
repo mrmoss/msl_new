@@ -13,7 +13,6 @@
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 #include <cstdint>
-#include <mutex>
 
 #define RSA_PKCS1_PADDING_SIZE			11
 #define RSA_PKCS1_OAEP_PADDING_SIZE		41
@@ -26,28 +25,43 @@
 #define AES_BLOCK_SIZE					16
 #define AES256_KEY_SIZE					32
 
-static std::mutex ossl_lock;
+namespace msl
+{
+	class crypto_initialize_t
+	{
+		public:
+			crypto_initialize_t()
+			{
+				ERR_load_crypto_strings();
+				OpenSSL_add_all_algorithms();
+			}
+
+			crypto_initialize_t(const crypto_initialize_t& copy)=delete;
+
+			~crypto_initialize_t()
+			{
+				ERR_free_strings();
+				EVP_cleanup();
+			}
+
+			crypto_initialize_t& operator=(const crypto_initialize_t& copy)=delete;
+	};
+}
+
+static msl::crypto_initialize_t crypto_initializer;
 
 static void rsa_cleanup(BIO* keybio,RSA* rsa)
 {
-	ossl_lock.lock();
 	BIO_free(keybio);
 	RSA_free(rsa);
-	ERR_free_strings();
-	EVP_cleanup();
 	ERR_remove_state(0);
 	CRYPTO_cleanup_all_ex_data();
-	ossl_lock.unlock();
 }
 
 static void aes_cleanup(EVP_CIPHER_CTX* ctx)
 {
-	ossl_lock.lock();
 	EVP_CIPHER_CTX_free(ctx);
-	ERR_free_strings();
-	EVP_cleanup();
 	ERR_remove_state(0);
-	ossl_lock.unlock();
 }
 
 msl::encryption_error::encryption_error(const std::string& str):std::runtime_error(str)
@@ -65,24 +79,10 @@ std::string msl::encrypt_rsa(const std::string& plain,const std::string& key)
 	BIO* keybio=nullptr;
 	RSA* rsa=nullptr;
 
-	ossl_lock.lock();
-
 	try
 	{
-		ERR_load_crypto_strings();
-		OpenSSL_add_all_algorithms();
 		keybio=BIO_new_mem_buf((uint8_t*)key.data(),-1);
-	}
-	catch(...)
-	{
-		ossl_lock.unlock();
-		throw;
-	}
 
-	ossl_lock.unlock();
-
-	try
-	{
 		if(keybio==nullptr)
 			throw msl::encryption_error("msl::encrypt_rsa() - BIO_new_mem_buf failed.");
 
@@ -121,24 +121,10 @@ std::string msl::decrypt_rsa(const std::string& cipher,const std::string& key)
 	BIO* keybio=nullptr;
 	RSA* rsa=nullptr;
 
-	ossl_lock.lock();
-
 	try
 	{
-		ERR_load_crypto_strings();
-		OpenSSL_add_all_algorithms();
 		keybio=BIO_new_mem_buf((uint8_t*)key.data(),-1);
-	}
-	catch(...)
-	{
-		ossl_lock.unlock();
-		throw;
-	}
 
-	ossl_lock.unlock();
-
-	try
-	{
 		if(keybio==nullptr)
 			throw msl::decryption_error("msl::decrypt_rsa() - BIO_new_mem_buf failed.");
 
@@ -177,24 +163,10 @@ std::string msl::encrypt_aes256(const std::string& plain,const std::string& key,
 	cipher.resize((plain.size()/AES_BLOCK_SIZE+1)*AES_BLOCK_SIZE);
 	EVP_CIPHER_CTX* ctx=nullptr;
 
-	ossl_lock.lock();
-
 	try
 	{
-		ERR_load_crypto_strings();
-		OpenSSL_add_all_algorithms();
 		ctx=EVP_CIPHER_CTX_new();
-	}
-	catch(...)
-	{
-		ossl_lock.unlock();
-		throw;
-	}
 
-	ossl_lock.unlock();
-
-	try
-	{
 		if(key.size()!=AES256_KEY_SIZE)
 			throw msl::encryption_error("msl::encrypt_aes256() - Given key size is invalid ("+
 				std::to_string(AES256_KEY_SIZE)+"bytes ).");
@@ -236,24 +208,10 @@ std::string msl::decrypt_aes256(const std::string& cipher,const std::string& key
 	plain.resize((cipher.size()/AES_BLOCK_SIZE+1)*AES_BLOCK_SIZE);
 	EVP_CIPHER_CTX* ctx=nullptr;
 
-	ossl_lock.lock();
-
 	try
 	{
-		ERR_load_crypto_strings();
-		OpenSSL_add_all_algorithms();
 		ctx=EVP_CIPHER_CTX_new();
-	}
-	catch(...)
-	{
-		ossl_lock.unlock();
-		throw;
-	}
 
-	ossl_lock.unlock();
-
-	try
-	{
 		if(key.size()!=AES256_KEY_SIZE)
 			throw msl::decryption_error("msl::decrypt_aes256() - Given key size is invalid ("+
 				std::to_string(AES256_KEY_SIZE)+"bytes ).");
