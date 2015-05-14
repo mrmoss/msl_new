@@ -72,7 +72,7 @@ std::string msl::replace_all(std::string str,const std::string& find,const std::
 
 bool msl::ends_with(const std::string& str,const std::string& suffix)
 {
-	return (str.size()>=suffix.size()&&str.compare(str.size()-suffix.size(),suffix.size(),suffix)==0);
+	return (str.size()>=suffix.size()&&str.compare(str.size()-suffix.size(),suffix.size(),suffix)!=std::string::npos);
 }
 
 bool msl::starts_with(const std::string& str,const std::string& prefix)
