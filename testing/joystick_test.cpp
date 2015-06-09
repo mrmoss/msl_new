@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <iostream>
 #include "../joystick.hpp"
 #include "../time.hpp"
@@ -27,9 +28,16 @@ int main()
 				std::cout<<"using joystick number "<<joystick_number<<" with "<<joystick.axis_count()<<
 					" axes and "<<joystick.button_count()<<" buttons"<<std::endl;
 			}
+
+			while(joystick.good())
+			{
+				for(size_t ii=0;ii<4;++ii)
+					std::cout<<std::setw(16)<<joystick.axis(ii);
+				std::cout<<std::endl;
+			}
 		}
 
-		msl::delay_ms(1);
+		msl::delay_ms(100);
 	}
 
 	return 0;
