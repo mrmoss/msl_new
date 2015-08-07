@@ -32,9 +32,7 @@ int main()
 		std::cout<<":)"<<std::endl;
 
 		while(test.good())
-		{
 			test.close();
-		}
 
 		std::cout<<"T_T"<<std::endl;
 	}

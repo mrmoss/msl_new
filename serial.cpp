@@ -246,6 +246,7 @@ static bool serial_valid(const msl::serial_device_t& device)
 	return tcgetattr(device.fd,&options)!=-1;
 }
 
+#ifndef __APPLE__
 std::vector<std::string> msl::serial_t::list()
 {
 	std::vector<std::string> list;
@@ -289,6 +290,16 @@ std::vector<std::string> msl::serial_t::list()
 
 	return list;
 }
+
+#else
+
+std::vector<std::string> msl::serial_t::list()
+{
+	std::vector<std::string> list;
+	return list;
+}
+
+#endif
 
 #endif
 
