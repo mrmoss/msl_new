@@ -9,7 +9,7 @@
 #g++ webserver_test.cpp ../mongoose/mongoose.c ../time.cpp ../webserver.cpp -o webserver_test -O -Wall -std=c++11 -lpthread
 #g++ serial_test.cpp ../serial.cpp ../time.cpp -o serial_test0 -O -Wall -std=c++11 -ggdb
 #g++ joystick_test.cpp ../joystick.cpp ../time.cpp -o joystick_test -O -Wall -std=c++11 -pthread -lpthread
-g++ serial_test.cpp ../serial.cpp ../time.cpp -o serial_test -O -Wall -std=c++11 -pthread -lpthread
+g++ serial_test.cpp ../serial.cpp ../time.cpp -o serial_test -O -Wall -std=c++11 -pthread -lpthread -framework IOKit -framework CoreFoundation
 
 
 

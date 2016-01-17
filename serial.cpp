@@ -1,3 +1,6 @@
+//Mac Dependencies:
+//		-framework IOKit -framework CoreFoundation
+
 #include "serial.hpp"
 
 static bool valid_baud(const size_t baud)
@@ -293,9 +296,45 @@ std::vector<std::string> msl::serial_t::list()
 
 #else
 
+#include <sys/param.h>
+#include <IOKit/IOKitLib.h>
+#include <IOKit/serial/IOSerialKeys.h>
+
 std::vector<std::string> msl::serial_t::list()
 {
 	std::vector<std::string> list;
+	mach_port_t master_port;
+	CFMutableDictionaryRef dictionary=IOServiceMatching(kIOSerialBSDServiceValue);
+	io_iterator_t iterator;
+	io_object_t port;
+
+	if(IOMasterPort(0,&master_port)!=KERN_SUCCESS||dictionary==0)
+		return list;
+
+	CFDictionarySetValue(dictionary,CFSTR(kIOSerialBSDTypeKey),CFSTR(kIOSerialBSDAllTypes));
+
+	if(IOServiceGetMatchingServices(master_port,dictionary,&iterator)!=KERN_SUCCESS)
+		return list;
+
+	while((port=IOIteratorNext(iterator))!=0)
+	{
+		CFTypeRef cf_name=IORegistryEntryCreateCFProperty(port,CFSTR(kIOCalloutDeviceKey),kCFAllocatorDefault,0);
+
+		if(cf_name!=nullptr)
+		{
+			std::string name;
+			name.resize(MAXPATHLEN);
+
+			if(CFStringGetCString((const __CFString*)cf_name,(char*)name.c_str(),MAXPATHLEN,kCFStringEncodingASCII))
+				list.push_back(name);
+
+			CFRelease(cf_name);
+		}
+
+		IOObjectRelease(port);
+	}
+
+	IOObjectRelease(iterator);
 	return list;
 }
 

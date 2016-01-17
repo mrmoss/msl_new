@@ -1,3 +1,6 @@
+//Mac Dependencies:
+//		-framework IOKit -framework CoreFoundation
+
 #ifndef MSL_C11_SERIAL_HPP
 #define MSL_C11_SERIAL_HPP
 
