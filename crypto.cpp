@@ -10,6 +10,7 @@
 #include <openssl/err.h>
 #include <openssl/md5.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 #include <cstdint>
@@ -223,10 +224,10 @@ std::string msl::decrypt_aes256(const std::string& cipher,const std::string& key
 			throw msl::decryption_error("msl::decrypt_aes256() - Creating a EVP_CIPHER_CTX failed.");
 
 		if(EVP_CIPHER_CTX_set_padding(ctx,1)==0)
-			throw msl::decryption_error("msl::edecrypt_aes256() - EVP_CIPHER_CTX_set_padding failed.");
+			throw msl::decryption_error("msl::decrypt_aes256() - EVP_CIPHER_CTX_set_padding failed.");
 
 		if(EVP_DecryptInit(ctx,EVP_aes_256_cbc(),(uint8_t*)key.data(),(uint8_t*)iv.data())==0)
-			throw msl::decryption_error("msl::encrypt_aes256() - EVP_DecryptInit failed.");
+			throw msl::decryption_error("msl::decrypt_aes256() - EVP_DecryptInit failed.");
 
 		if(EVP_DecryptUpdate(ctx,(uint8_t*)plain.data(),&temp_length,(uint8_t*)cipher.data(),cipher.size())==0)
 			throw msl::decryption_error("msl::decrypt_aes256() - EVP_DecryptUpdate failed.");
@@ -406,4 +407,13 @@ std::string msl::pbkdf2(const std::string& password,const std::string& salt,cons
 		throw msl::hash_error("msl::pbkdf2() - PKCS5_PBKDF2_HMAC_SHA1 failed.");
 
 	return key;
+}
+
+std::string msl::crypto_rand(const size_t size)
+{
+	std::string bytes;
+	bytes.resize(size);
+	if(RAND_bytes((uint8_t*)bytes.c_str(),size)!=1)
+		throw std::runtime_error("msl::crypto_rand() - Error getting cryptographically strong random numbers.");
+	return bytes;
 }

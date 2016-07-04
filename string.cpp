@@ -20,7 +20,6 @@ std::string msl::to_upper(std::string str)
 std::string msl::to_hex_string(const std::string& str)
 {
 	std::ostringstream ostr;
-	ostr<<"0x";
 
 	for(auto ii:str)
 		ostr<<std::hex<<std::setw(2)<<std::setfill('0')<<((int)ii&0x000000ff);
@@ -31,9 +30,6 @@ std::string msl::to_hex_string(const std::string& str)
 std::string msl::from_hex_string(std::string str)
 {
 	std::string ret="";
-
-	if(msl::starts_with(str,"0x"))
-		str=str.substr(2,str.size()-2);
 
 	if(str.size()%2!=0)
 		str.insert(0,"0");
