@@ -30,6 +30,8 @@ namespace msl
 			hash_error(const std::string& str);
 	};
 
+	void generate_rsa(const size_t bits,std::string& private_key,std::string& public_key);
+
 	std::string encrypt_rsa(const std::string& plain,const std::string& key);
 	std::string decrypt_rsa(const std::string& cipher,const std::string& key);
 

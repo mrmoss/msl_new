@@ -74,6 +74,45 @@ msl::decryption_error::decryption_error(const std::string& str):std::runtime_err
 msl::hash_error::hash_error(const std::string& str):std::runtime_error(str)
 {}
 
+void msl::generate_rsa(const size_t bits,std::string& private_key,std::string& public_key)
+{
+	BIGNUM* bignum=BN_new();
+	if(BN_set_word(bignum,RSA_F4)!=1)
+	{
+		BN_free(bignum);
+		ERR_remove_state(0);
+		CRYPTO_cleanup_all_ex_data();
+		throw std::runtime_error("Could not initialize big number engine.");
+	}
+
+	RSA* key_pair=RSA_new();
+	if(RSA_generate_key_ex(key_pair,bits,bignum,NULL)!=1)
+	{
+		RSA_free(key_pair);
+		BN_free(bignum);
+		ERR_remove_state(0);
+		CRYPTO_cleanup_all_ex_data();
+		throw std::runtime_error("Could not generate RSA key.");
+	}
+
+	BIO* private_bio=BIO_new(BIO_s_mem());
+	PEM_write_bio_RSAPrivateKey(private_bio,key_pair,NULL,NULL,0,NULL,NULL);
+	private_key.resize(BIO_pending(private_bio));
+	BIO_read(private_bio,(void*)private_key.c_str(),private_key.size());
+
+	BIO* public_bio=BIO_new(BIO_s_mem());
+	PEM_write_bio_RSAPublicKey(public_bio,key_pair);
+	public_key.resize(BIO_pending(public_bio));
+	BIO_read(public_bio,(void*)public_key.c_str(),public_key.size());
+
+	BIO_free_all(private_bio);
+	BIO_free_all(public_bio);
+	RSA_free(key_pair);
+	BN_free(bignum);
+	ERR_remove_state(0);
+	CRYPTO_cleanup_all_ex_data();
+}
+
 std::string msl::encrypt_rsa(const std::string& plain,const std::string& key)
 {
 	std::string cipher;
