@@ -15,7 +15,6 @@
 #include <openssl/sha.h>
 #include <cstdint>
 
-#define RSA_PKCS1_PADDING_SIZE			11
 #define RSA_PKCS1_OAEP_PADDING_SIZE		41
 
 #define MD5_BLOCK_SIZE					64
@@ -37,15 +36,15 @@ namespace msl
 				OpenSSL_add_all_algorithms();
 			}
 
-			crypto_initialize_t(const crypto_initialize_t& copy)=delete;
-
 			~crypto_initialize_t()
 			{
 				ERR_free_strings();
 				EVP_cleanup();
 			}
 
-			crypto_initialize_t& operator=(const crypto_initialize_t& copy)=delete;
+		private:
+			crypto_initialize_t(const crypto_initialize_t& copy);
+			crypto_initialize_t& operator=(const crypto_initialize_t& copy);
 	};
 }
 
@@ -82,7 +81,7 @@ void msl::generate_rsa(const size_t bits,std::string& private_key,std::string& p
 		BN_free(bignum);
 		ERR_remove_state(0);
 		CRYPTO_cleanup_all_ex_data();
-		throw std::runtime_error("Could not initialize big number engine.");
+		throw std::runtime_error("msl::generate_rsa() - BN_set_word failed.");
 	}
 
 	RSA* key_pair=RSA_new();
@@ -92,21 +91,21 @@ void msl::generate_rsa(const size_t bits,std::string& private_key,std::string& p
 		BN_free(bignum);
 		ERR_remove_state(0);
 		CRYPTO_cleanup_all_ex_data();
-		throw std::runtime_error("Could not generate RSA key.");
+		throw std::runtime_error("msl::generate_rsa() - RSA_generate_key_ex failed.");
 	}
 
 	BIO* private_bio=BIO_new(BIO_s_mem());
 	PEM_write_bio_RSAPrivateKey(private_bio,key_pair,NULL,NULL,0,NULL,NULL);
 	private_key.resize(BIO_pending(private_bio));
 	BIO_read(private_bio,(void*)private_key.c_str(),private_key.size());
+	BIO_free_all(private_bio);
 
 	BIO* public_bio=BIO_new(BIO_s_mem());
 	PEM_write_bio_RSAPublicKey(public_bio,key_pair);
 	public_key.resize(BIO_pending(public_bio));
 	BIO_read(public_bio,(void*)public_key.c_str(),public_key.size());
-
-	BIO_free_all(private_bio);
 	BIO_free_all(public_bio);
+
 	RSA_free(key_pair);
 	BN_free(bignum);
 	ERR_remove_state(0);
@@ -126,7 +125,7 @@ std::string msl::encrypt_rsa(const std::string& plain,const std::string& key)
 		if(keybio==nullptr)
 			throw msl::encryption_error("msl::encrypt_rsa() - BIO_new_mem_buf failed.");
 
-		rsa=PEM_read_bio_RSA_PUBKEY(keybio,&rsa,nullptr,nullptr);
+		rsa=PEM_read_bio_RSAPublicKey(keybio,&rsa,nullptr,nullptr);
 
 		if(rsa==nullptr)
 			throw msl::encryption_error("msl::encrypt_rsa() - PEM_read_bio_RSA_PUBKEY failed.");
@@ -209,7 +208,7 @@ std::string msl::encrypt_aes256(const std::string& plain,const std::string& key,
 
 		if(key.size()!=AES256_KEY_SIZE)
 			throw msl::encryption_error("msl::encrypt_aes256() - Given key size is invalid ("+
-				std::to_string(AES256_KEY_SIZE)+"bytes ).");
+				std::to_string(AES256_KEY_SIZE)+" bytes).");
 
 		int temp_length;
 		int temp_unaligned_length;
@@ -254,7 +253,7 @@ std::string msl::decrypt_aes256(const std::string& cipher,const std::string& key
 
 		if(key.size()!=AES256_KEY_SIZE)
 			throw msl::decryption_error("msl::decrypt_aes256() - Given key size is invalid ("+
-				std::to_string(AES256_KEY_SIZE)+"bytes ).");
+				std::to_string(AES256_KEY_SIZE)+" bytes).");
 
 		int temp_length;
 		int temp_unaligned_length;

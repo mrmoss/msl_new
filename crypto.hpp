@@ -4,8 +4,8 @@
 //Linux Dependencies:
 //		-lcrypto
 
-#ifndef MSL_C11_CRYPTO_HPP
-#define MSL_C11_CRYPTO_HPP
+#ifndef MSL_C03_CRYPTO_HPP
+#define MSL_C03_CRYPTO_HPP
 
 #include <stdexcept>
 #include <string>

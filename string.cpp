@@ -21,8 +21,8 @@ std::string msl::to_hex_string(const std::string& str)
 {
 	std::ostringstream ostr;
 
-	for(auto ii:str)
-		ostr<<std::hex<<std::setw(2)<<std::setfill('0')<<((int)ii&0x000000ff);
+	for(size_t ii=0;ii<str.size();++ii)
+		ostr<<std::hex<<std::setw(2)<<std::setfill('0')<<((int)str[ii]&0x000000ff);
 
 	return ostr.str();
 }
