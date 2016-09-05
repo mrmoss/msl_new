@@ -26,10 +26,10 @@
 #define AES_BLOCK_SIZE					16
 #define AES256_KEY_SIZE					32
 
-template<typename T> static std::string to_string(const T& val)
+template<typename T> static std::string to_string(const T& xx)
 {
 	std::ostringstream ostr;
-	ostr<<val;
+	ostr<<xx;
 	return ostr.str();
 }
 
@@ -109,7 +109,7 @@ void msl::generate_rsa(const size_t bits,std::string& private_key,std::string& p
 	BIO_free_all(private_bio);
 
 	BIO* public_bio=BIO_new(BIO_s_mem());
-	PEM_write_bio_RSAPublicKey(public_bio,key_pair);
+	PEM_write_bio_RSA_PUBKEY(public_bio,key_pair);
 	public_key.resize(BIO_pending(public_bio));
 	BIO_read(public_bio,(void*)public_key.c_str(),public_key.size());
 	BIO_free_all(public_bio);
@@ -133,7 +133,7 @@ std::string msl::encrypt_rsa(const std::string& plain,const std::string& key)
 		if(keybio==NULL)
 			throw msl::encryption_error("msl::encrypt_rsa() - BIO_new_mem_buf failed.");
 
-		rsa=PEM_read_bio_RSAPublicKey(keybio,&rsa,NULL,NULL);
+		rsa=PEM_read_bio_RSA_PUBKEY(keybio,&rsa,NULL,NULL);
 
 		if(rsa==NULL)
 			throw msl::encryption_error("msl::encrypt_rsa() - PEM_read_bio_RSA_PUBKEY failed.");
