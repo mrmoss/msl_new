@@ -4,6 +4,9 @@
 //Linux Dependencies:
 //		-lpthread
 
+//OSX Dependencies:
+//		-framework IOKit -framework CoreFoundation
+
 #ifndef MSL_C11_JOYSTICK_HPP
 #define MSL_C11_JOYSTICK_HPP
 
@@ -13,6 +16,10 @@
 
 #if(defined(_WIN32)&&!defined(__CYGWIN__))
 #include <Windows.h>
+#endif
+
+#if(defined(__APPLE__))
+#include <IOKit/hid/IOHIDLib.h>
 #endif
 
 namespace msl
@@ -34,6 +41,23 @@ namespace msl
 			inline js_fd_t(HANDLE handle=INVALID_HANDLE_VALUE,RAWINPUTDEVICELIST device=
 				{INVALID_HANDLE_VALUE,0}):handle(handle),device(device)
 				{}
+	};
+
+	#elif(defined(__APPLE__))
+
+	struct js_info_t
+	{
+		std::string name;
+		IOHIDDeviceRef device;
+	};
+
+	class js_fd_t
+	{
+		public:
+			IOHIDDeviceRef device;
+
+			inline js_fd_t(const IOHIDDeviceRef device=nullptr):device(device)
+			{}
 	};
 
 	#else

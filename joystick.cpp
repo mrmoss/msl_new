@@ -4,6 +4,9 @@
 //Linux Dependencies:
 //		-lpthread
 
+//OSX Dependencies:
+//		-framework IOKit -framework CoreFoundation
+
 #include "joystick.hpp"
 
 #include <chrono>
@@ -256,7 +259,9 @@ static msl::js_fd_t joystick_open(const msl::js_info_t info)
 
 static bool joystick_close(const msl::js_fd_t& fd)
 {
-	return CloseHandle(fd.handle);
+	bool ret=CloseHandle(fd.handle);
+	fd_m.handle=INVALID_HANDLE_VALUE;
+	return ret;
 }
 
 static void joystick_update(msl::js_fd_t& fd,std::vector<float>& axes,std::vector<bool>& buttons)
@@ -311,7 +316,480 @@ static size_t joystick_button_count(const msl::js_fd_t& fd)
 	return count;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#elif(defined(__APPLE__))
+
+#include <map>
+#include <iostream>
+
+static std::map<IOHIDDeviceRef,bool> device_allocated;
+
+class hid_device_t
+{
+	public:
+		IOHIDDeviceRef device;
+		CFArrayRef elements;
+		std::string name;
+		std::vector<float> axes;
+		std::vector<int> hats;
+		std::vector<bool> buttons;
+
+		enum type_t
+		{
+			NONE,
+			AXIS,
+			HAT,
+			BUTTON
+		};
+
+		hid_device_t(const IOHIDDeviceRef& device,const bool init=false);
+		bool operator==(const IOHIDDeviceRef& rhs) const;
+		void initialize();
+		void release();
+		void update();
+};
+
+hid_device_t::hid_device_t(const IOHIDDeviceRef& device,const bool init):
+	device(device),elements(nullptr),name("")
+{
+	if(device&&device_allocated.count(device)==0)
+		device_allocated[device]=false;
+	if(init)
+		initialize();
+}
+
+bool hid_device_t::operator==(const IOHIDDeviceRef& rhs) const
+{
+	return device==rhs;
+}
+
+void hid_device_t::initialize()
+{
+	name=CFStringGetCStringPtr(
+		(CFStringRef)IOHIDDeviceGetProperty(device,
+		CFSTR(kIOHIDProductKey)),kCFStringEncodingASCII);
+	elements=IOHIDDeviceCopyMatchingElements(device,nullptr,kIOHIDOptionsTypeNone);
+	device_allocated[device]=true;
+}
+
+void hid_device_t::release()
+{
+	CFRelease(elements);
+	elements=nullptr;
+	if(device&&device_allocated[device])
+	{
+		IOHIDDeviceClose(device,kIOHIDOptionsTypeSeizeDevice);
+		CFRelease(device);
+		device_allocated[device]=false;
+	}
+	device=nullptr;
+}
+
+void hid_device_t::update()
+{
+	if(!device)
+		return;
+	if(device&&elements)
+	{
+		std::vector<float> axes_temp;
+		std::vector<int> hats_temp;
+		std::vector<bool> buttons_temp;
+		if(!elements)
+			return;
+		for(size_t ii=0;ii<CFArrayGetCount(elements);++ii)
+		{
+			IOHIDElementRef element=(IOHIDElementRef)CFArrayGetValueAtIndex(elements,ii);
+			int usage_page=IOHIDElementGetUsagePage(element);
+			int usage=IOHIDElementGetUsage(element);
+			type_t type=NONE;
+			if(usage_page==kHIDPage_GenericDesktop)
+			{
+				if(usage==kHIDUsage_GD_X||usage==kHIDUsage_GD_Y||usage==kHIDUsage_GD_Z||
+					usage==kHIDUsage_GD_Rx||usage==kHIDUsage_GD_Ry||usage==kHIDUsage_GD_Rz||
+					usage==kHIDUsage_GD_Slider||usage==kHIDUsage_GD_Dial||usage==kHIDUsage_GD_Wheel)
+					type=AXIS;
+				else if(usage==kHIDUsage_GD_Hatswitch)
+					type=HAT;
+			}
+			else if(usage_page==kHIDPage_Button)
+			{
+				type=BUTTON;
+			}
+			if(type!=NONE)
+			{
+				int min=IOHIDElementGetLogicalMin(element);
+				int max=IOHIDElementGetLogicalMax(element);
+				IOHIDValueRef new_value;
+				int value=0;
+				if(value<min)
+					value=min;
+				if(value>max)
+					value=max;
+				if(IOHIDDeviceGetValue(device,element,&new_value)==kIOReturnSuccess)
+					value=IOHIDValueGetIntegerValue(new_value);
+				if(type==AXIS)
+				{
+					float val=(value*2.0-max+min)/(max-min);
+					if(val<-1)
+						val=-1;
+					if(val>1)
+						val=1;
+					axes_temp.push_back(val);
+				}
+				else if(type==HAT)
+					hats_temp.push_back(value);
+				else if(type==BUTTON)
+					buttons_temp.push_back(value);
+			}
+		}
+		if(axes.size()<axes_temp.size())
+			axes.resize(axes_temp.size());
+		for(size_t ii=0;ii<axes_temp.size();++ii)
+			axes[ii]=axes_temp[ii];
+		if(hats.size()<hats_temp.size())
+			hats.resize(hats_temp.size());
+		for(size_t ii=0;ii<hats_temp.size();++ii)
+			hats[ii]=hats_temp[ii];
+		if(buttons.size()<buttons_temp.size())
+			buttons.resize(buttons_temp.size());
+		for(size_t ii=0;ii<buttons_temp.size();++ii)
+			buttons[ii]=buttons_temp[ii];
+	}
+}
+
+static void add_cb(void* context,IOReturn result,void* sender,IOHIDDeviceRef device);
+static void remove_cb(void* context,IOReturn result,void* sender,IOHIDDeviceRef device);
+
+class hid_manager_t
+{
+	public:
+		IOHIDManagerRef manager;
+		std::vector<hid_device_t> devices;
+		std::mutex mutex;
+
+		hid_manager_t()
+		{
+			std::thread thread(std::bind(&hid_manager_t::update,this));
+			thread.detach();
+		}
+
+		~hid_manager_t()
+		{
+			mutex.lock();
+			for(auto& device:devices)
+				device.release();
+			mutex.unlock();
+			IOHIDManagerClose(manager,kIOHIDOptionsTypeNone);
+			CFRelease(manager);
+		}
+
+		hid_manager_t(const hid_manager_t& copy)=delete;
+		hid_manager_t& operator=(const hid_manager_t& copy)=delete;
+
+		void update()
+		{
+			manager=IOHIDManagerCreate(kCFAllocatorDefault,kIOHIDOptionsTypeNone);
+			if(!manager)
+				throw std::runtime_error("Error creating HID manager.");
+			IOHIDManagerOpen(manager,kIOHIDOptionsTypeNone);
+			IOHIDManagerSetDeviceMatchingMultiple(manager,create_dictionary());
+			IOHIDManagerRegisterDeviceMatchingCallback(manager,add_cb,this);
+			IOHIDManagerRegisterDeviceRemovalCallback(manager,remove_cb,this);
+			IOHIDManagerScheduleWithRunLoop(manager,CFRunLoopGetCurrent(),CFSTR("MSL"));
+			CFRunLoopRunInMode(CFSTR("MSL"),0,true);
+
+			while(true)
+			{
+				CFRunLoopRunInMode(CFSTR("MSL"),0,true);
+				mutex.lock();
+				for(auto& device:devices)
+					device.update();
+				mutex.unlock();
+				std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			}
+		}
+
+		std::vector<hid_device_t> get_devices()
+		{
+			std::vector<hid_device_t> good_devices;
+			mutex.lock();
+			for(auto& device:devices)
+				if(device.device!=nullptr&&device_allocated.count(device.device)>0&&
+					device_allocated[device.device])
+					good_devices.push_back(device);
+			mutex.unlock();
+			return good_devices;
+		}
+
+		bool device_ok(IOHIDDeviceRef find_device)
+		{
+			mutex.lock();
+			bool ok=(find_device!=nullptr&&device_allocated.count(find_device)>0&&
+				device_allocated[find_device]);
+			if(ok)
+			{
+				ok=false;
+				for(auto& device:devices)
+					if(device==find_device)
+					{
+						ok=true;
+						break;
+					}
+			}
+			mutex.unlock();
+			return ok;
+		}
+
+		void initialize_device(IOHIDDeviceRef new_device)
+		{
+			mutex.lock();
+			bool found=false;
+			for(auto& device:devices)
+				if(device==new_device)
+				{
+					device.initialize();
+					found=true;
+					break;
+				}
+			if(!found)
+				devices.push_back({new_device,true});
+			mutex.unlock();
+		}
+
+		void remove_device(IOHIDDeviceRef old_device)
+		{
+			mutex.lock();
+			for(size_t ii=0;ii<devices.size();++ii)
+				if(devices[ii]==old_device)
+				{
+					devices[ii].release();
+					devices.erase(devices.begin()+ii);
+					break;
+				}
+			mutex.unlock();
+		}
+
+		void get_update(IOHIDDeviceRef find_device,std::vector<float>& axes,std::vector<bool>& buttons)
+		{
+			mutex.lock();
+			for(auto& device:devices)
+				if(device==find_device)
+				{
+					axes=device.axes;
+					buttons=device.buttons;
+					break;
+				}
+			mutex.unlock();
+		}
+
+		size_t get_axes_count(IOHIDDeviceRef find_device)
+		{
+			size_t count=0;
+			mutex.lock();
+			for(auto& device:devices)
+				if(device==find_device)
+				{
+					count=device.axes.size();
+					break;
+				}
+			mutex.unlock();
+			return count;
+		}
+
+		size_t get_buttons_count(IOHIDDeviceRef find_device)
+		{
+			size_t count=0;
+			mutex.lock();
+			for(auto& device:devices)
+				if(device==find_device)
+				{
+					count=device.buttons.size();
+					break;
+				}
+			mutex.unlock();
+			return count;
+		}
+
+		void* create_match(const uint32_t usage_page,const uint32_t usage,bool& error)
+		{
+			error=true;
+			CFDictionaryRef dictionary=NULL;
+			CFNumberRef usage_page_index=CFNumberCreate(kCFAllocatorDefault,kCFNumberIntType,&usage_page);
+			CFNumberRef usage_index=CFNumberCreate(kCFAllocatorDefault,kCFNumberIntType,&usage);
+			std::vector<void*> keys
+			{
+				(void*)CFSTR(kIOHIDDeviceUsagePageKey),
+				(void*)CFSTR(kIOHIDDeviceUsageKey)
+			};
+			std::vector<void*> vals
+			{
+				(void*)usage_page_index,
+				(void*)usage_index
+			};
+			if(usage_page_index&&usage_index)
+				dictionary=CFDictionaryCreate(kCFAllocatorDefault,(const void**)keys.data(),(const void**)vals.data(),
+					keys.size(),&kCFTypeDictionaryKeyCallBacks,&kCFTypeDictionaryValueCallBacks);
+			if(usage_page_index)
+				CFRelease(usage_page_index);
+			if(usage_index)
+				CFRelease(usage_index);
+			if(dictionary!=nullptr)
+				error=false;
+			return (void*)dictionary;
+		}
+
+		CFArrayRef create_dictionary()
+		{
+			bool error=false;
+			std::vector<void*> matches;
+			matches.push_back(create_match(kHIDPage_GenericDesktop,kHIDUsage_GD_Joystick,error));
+			matches.push_back(create_match(kHIDPage_GenericDesktop,kHIDUsage_GD_GamePad,error));
+			matches.push_back(create_match(kHIDPage_GenericDesktop,kHIDUsage_GD_MultiAxisController,error));
+			if(error)
+				throw std::runtime_error("Error building HID dictionary.");
+			CFArrayRef dictionary=CFArrayCreate(kCFAllocatorDefault,(const void**)matches.data(),matches.size(),
+				&kCFTypeArrayCallBacks);
+			for(auto match:matches)
+				if(match)
+					CFRelease((CFTypeRef*)match);
+			return dictionary;
+		}
+};
+
+static hid_manager_t hid_manager;
+
+static void add_cb(void* context,IOReturn result,void* sender,IOHIDDeviceRef device)
+{
+	if(result!=kIOReturnSuccess)
+		return;
+	hid_manager_t& manager=*(hid_manager_t*)context;
+	manager.initialize_device(device);
+}
+
+static void remove_cb(void* context,IOReturn result,void* sender,IOHIDDeviceRef device)
+{
+	hid_manager_t& manager=*(hid_manager_t*)context;
+	manager.remove_device(device);
+}
+
+
+
+
+
+
+
+
+std::vector<msl::js_info_t> msl::joystick_t::list()
+{
+	std::vector<msl::js_info_t> list;
+	auto devices=hid_manager.get_devices();
+	for(auto device:devices)
+		list.push_back({device.name,device.device});
+	return list;
+}
+
+static bool joystick_valid_fd(const msl::js_fd_t& fd)
+{
+	return hid_manager.device_ok(fd.device);
+}
+
+static msl::js_fd_t joystick_open(const msl::js_info_t info)
+{
+	return {info.device};
+}
+
+static bool joystick_close(const msl::js_fd_t& fd)
+{
+	return true;
+}
+
+static void joystick_update(msl::js_fd_t& fd,std::vector<float>& axes,std::vector<bool>& buttons)
+{
+	hid_manager.get_update(fd.device,axes,buttons);
+}
+
+static size_t joystick_axis_count(const msl::js_fd_t& fd)
+{
+	return hid_manager.get_axes_count(fd.device);
+}
+
+static size_t joystick_button_count(const msl::js_fd_t& fd)
+{
+	return hid_manager.get_buttons_count(fd.device);
+}
+
 #else
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #include <dirent.h>
 #include <errno.h>
@@ -363,7 +841,9 @@ static msl::js_fd_t joystick_open(const msl::js_info_t info)
 
 static bool joystick_close(const msl::js_fd_t& fd)
 {
-	return close(fd.handle);
+	int ret=close(fd.handle);
+	fd_m.handle=INVALID_HANDLE_VALUE;
+	return ret;
 }
 
 static void joystick_update(msl::js_fd_t& fd,std::vector<float>& axes,std::vector<bool>& buttons)
@@ -392,7 +872,6 @@ static size_t joystick_axis_count(const msl::js_fd_t& fd)
 {
 	unsigned char count=0;
 	ioctl(fd.handle,JSIOCGAXES,&count);
-
 	return (size_t)count;
 }
 
@@ -400,7 +879,6 @@ static size_t joystick_button_count(const msl::js_fd_t& fd)
 {
 	unsigned char count=0;
 	ioctl(fd.handle,JSIOCGBUTTONS,&count);
-
 	return (size_t)count;
 }
 
@@ -416,15 +894,17 @@ msl::joystick_t::~joystick_t()
 
 void msl::joystick_t::open()
 {
+	lock_m.lock();
 	fd_m=joystick_open(info_m);
+	lock_m.unlock();
 
 	if(good())
 	{
 		lock_m.lock();
 		axes_m.resize(joystick_axis_count(fd_m));
 		buttons_m.resize(joystick_button_count(fd_m));
-		std::thread test(std::bind(&msl::joystick_t::update_m,this));
-		test.detach();
+		std::thread thread(std::bind(&msl::joystick_t::update_m,this));
+		thread.detach();
 		lock_m.unlock();
 	}
 }
@@ -433,7 +913,6 @@ void msl::joystick_t::close()
 {
 	lock_m.lock();
 	joystick_close(fd_m);
-	fd_m.handle=INVALID_HANDLE_VALUE;
 	lock_m.unlock();
 }
 
@@ -490,22 +969,30 @@ size_t msl::joystick_t::button_count()
 
 void msl::joystick_t::update_m()
 {
-	while(good())
+	while(true)
 	{
-		lock_m.lock();
-		auto fd_copy=fd_m;
-		auto axes_copy=axes_m;
-		auto buttons_copy=buttons_m;
-		lock_m.unlock();
+		try
+		{
+			while(good())
+			{
+				lock_m.lock();
+				auto fd_copy=fd_m;
+				auto axes_copy=axes_m;
+				auto buttons_copy=buttons_m;
 
-		joystick_update(fd_copy,axes_copy,buttons_copy);
+				joystick_update(fd_copy,axes_copy,buttons_copy);
 
-		lock_m.lock();
-		fd_m=fd_copy;
-		axes_m=axes_copy;
-		buttons_m=buttons_copy;
-		lock_m.unlock();
+				fd_m=fd_copy;
+				axes_m=axes_copy;
+				buttons_m=buttons_copy;
+				lock_m.unlock();
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			}
+			break;
+		}
+		catch(...)
+		{
+		}
 	}
 }
