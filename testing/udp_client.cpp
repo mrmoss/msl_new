@@ -5,12 +5,14 @@
 #include "../socket.hpp"
 #include "../time.hpp"
 
-int main()
+int main(int argc,char* argv[])
 {
 	const size_t buffer_size=200;
-	const char filler='b';
-	//msl::udp_socket_t c("127.0.0.1:8080>127.0.0.1:8081",buffer_size);
-	msl::udp_socket_t c("127.0.0.1:8081>127.0.0.1:8080",buffer_size);
+	char filler='a';
+	if(std::string(argv[1])=="8081")
+		filler='b';
+	msl::udp_socket_t c("172.20.230.71:"+std::string(argv[1])+
+		"<172.20.230.71:"+std::string(argv[2]),buffer_size);
 	c.open();
 
 	if(!c.good())
@@ -21,12 +23,12 @@ int main()
 
 	std::cout<<":)\t"<<c.address()<<std::endl;
 
-	auto timer=msl::millis()+1000;
+	//auto timer=msl::millis()+1000;
 
 
 	while(c.good())
 	{
-		if(msl::millis()>=timer)
+		/*if(msl::millis()>=timer)
 		{
 			std::cout<<"sending packet!"<<std::endl;
 			std::string data;
@@ -34,11 +36,12 @@ int main()
 				data+=filler;
 			c.write(data);
 			timer=msl::millis()+1000;
-		}
+		}*/
 
 		char temp[buffer_size];
+		//std::cout<<c.available()<<std::endl;
 
-		while(c.available()>0&&c.read(temp,buffer_size)==buffer_size)
+		while(c.read(temp,buffer_size)==buffer_size)
 			std::cout<<"received packet!\t"<<temp[0]<<std::endl;
 
 		msl::delay_ms(1);

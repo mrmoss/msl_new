@@ -31,9 +31,9 @@ int main()
 
 			while(joystick.good())
 			{
-				for(size_t ii=0;ii<4;++ii)
+				/*for(size_t ii=0;ii<joystick.axis_count()&&ii<4;++ii)
 					std::cout<<std::setw(16)<<joystick.axis(ii);
-				std::cout<<std::endl;
+				std::cout<<std::endl;*/
 			}
 		}
 

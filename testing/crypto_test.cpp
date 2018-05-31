@@ -54,6 +54,10 @@ std::string hmac_key="key";
 
 int main(int argc,char* argv[])
 {
+	std::cout<<msl::to_hex_string(msl::hmac_sha256("123","456"))<<std::endl;
+	std::cout<<msl::to_hex_string(msl::hmac_sha256("456","123"))<<std::endl;
+	return 0;
+
 	std::string plaintext="The quick brown fox jumps over the lazy dog";
 	std::string encryptedtext="";
 	std::string decryptedtext="";

@@ -22,27 +22,27 @@ namespace msl
 			virtual ~vector()
 			{}
 
-			unsigned int size() const
+			size_t size() const
 			{
 				return data_m.size();
 			}
 
-			T& operator[](const unsigned int index)
+			T& operator[](const size_t index)
 			{
 				return data_m[index];
 			}
 
-			const T& operator[](const unsigned int index) const
+			const T& operator[](const size_t index) const
 			{
 				return data_m[index];
 			}
 
-			T& at(const unsigned int index)
+			T& at(const size_t index)
 			{
 				return data_m.at(index);
 			}
 
-			const T& at(const unsigned int index) const
+			const T& at(const size_t index) const
 			{
 				return data_m.at(index);
 			}
@@ -279,7 +279,7 @@ namespace msl
 		if(lhs.size()!=rhs.size())
 			throw std::runtime_error("vector::operator+() - vectors must be the same size.");
 
-		for(unsigned int ii=0;ii<lhs.size();++ii)
+		for(size_t ii=0;ii<lhs.size();++ii)
 			lhs[ii]=lhs[ii]+rhs[ii];
 
 		return lhs;
@@ -346,7 +346,7 @@ namespace msl
 
 		T product=T();
 
-		for(unsigned int ii=0;ii<lhs.size();++ii)
+		for(size_t ii=0;ii<lhs.size();++ii)
 			product+=lhs[ii]*rhs[ii];
 
 		return product;

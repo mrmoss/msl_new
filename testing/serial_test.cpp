@@ -8,7 +8,10 @@ int main()
 	while(true)
 	{
 		auto serials=msl::serial_t::list();
-		size_t serial_number=0;
+		size_t serial_number=1;
+
+		for(auto ii:serials)
+			std::cout<<"|"<<ii<<"|"<<std::endl;
 
 		if(serials.size()<=serial_number)
 		{
